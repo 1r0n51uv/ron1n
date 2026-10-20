@@ -1,0 +1,25 @@
+# ron1n
+
+Brand personale di sviluppo software. Questo repo è l'hub: raccoglie i
+progetti, l'identità visiva e la configurazione dell'home server su cui
+girano. Ogni app vive nel suo repo.
+
+## Progetti
+
+| Progetto | Cosa è | Repo | Stato |
+|---|---|---|---|
+| ron1nOS | Dashboard dell'homelab: pasti, allenamenti, peso, casa, server, container, download, note | _da creare_ | design pronto |
+| ron1nOS iOS | Versione iOS della dashboard | _da creare_ | design pronto |
+| 1r0-pkm | App iOS/Watch per palestra e dieta, API Fastify + Postgres | [1r0n51uv/1r0-pkm](https://github.com/1r0n51uv/1r0-pkm) | beta |
+
+## Identità
+
+Liquid glass su nero, un solo accento rosso `#FF2A2A`. Font: Chakra Petch,
+IBM Plex Sans, JetBrains Mono, Shippori Mincho. Logo: sigillo Hanko · Fasce.
+Il design system ron1nOS (namespace `Ron1n`, 17 componenti React, token) è
+la fonte di verità per tutte le interfacce.
+
+## Home server
+
+Mini PC Ryzen 5 5300U, 16 GB RAM, Debian + Docker Compose. Configurazione
+in [`infra/`](infra/), primo setup in [`docs/server-setup.md`](docs/server-setup.md).

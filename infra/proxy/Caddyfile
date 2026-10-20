@@ -1,0 +1,9 @@
+# Nomi interni, raggiungibili via Tailscale. TLS interno di Caddy finché
+# non c'è un dominio vero.
+{
+	local_certs
+}
+
+status.ron1n.home {
+	reverse_proxy uptime-kuma:3001
+}

@@ -1,0 +1,18 @@
+# Monitoraggio dei servizi e delle API esterne.
+name: monitoring
+
+services:
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    restart: unless-stopped
+    volumes:
+      - kuma_data:/app/data
+    networks:
+      - proxy
+
+volumes:
+  kuma_data:
+
+networks:
+  proxy:
+    external: true

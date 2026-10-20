@@ -1,0 +1,14 @@
+# Aggiorna automaticamente solo i container con l'etichetta
+# com.centurylinklabs.watchtower.enable=true (le immagini delle app ron1n).
+name: updates
+
+services:
+  watchtower:
+    image: containrrr/watchtower:1.7.1
+    restart: unless-stopped
+    environment:
+      WATCHTOWER_LABEL_ENABLE: "true"
+      WATCHTOWER_CLEANUP: "true"
+      WATCHTOWER_POLL_INTERVAL: "300"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
