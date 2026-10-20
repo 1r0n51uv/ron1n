@@ -11,7 +11,11 @@ https://github.com/1r0n51uv/ron1n/blob/main/docs/flusso-sviluppo.md.
   `mod:*` e `prio:*` di `.github/labels.yml`.
 - Una PR per issue, con `Closes #N`; nella stessa PR aggiorna lo stato del
   requisito a `fatto (#PR)`.
-- La CI (`ci.yml`) deve essere verde prima del merge. Non disattivare test
-  per farla passare.
+- Ogni PR porta i suoi test: unit (Vitest, `*.test.ts(x)` accanto al file)
+  e almeno uno scenario e2e (Playwright, `e2e/`) per ciò che l'utente vede.
+- Lo stile lo decide Prettier (`npm run format`); ESLint con zero warning.
+  Prima di consegnare `npm run check` deve essere pulito.
+- La CI (`ci.yml`) deve essere verde prima del merge. Non disattivare né
+  saltare test per farla passare.
 - Il merge su `main` pubblica l'immagine su GHCR e il server si aggiorna da
   solo: `main` deve essere sempre deployabile.

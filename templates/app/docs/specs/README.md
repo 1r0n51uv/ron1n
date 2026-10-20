@@ -8,9 +8,9 @@ https://github.com/1r0n51uv/ron1n/blob/main/docs/flusso-sviluppo.md.
 
 ## Moduli
 
-| Modulo | File | Prefisso ID | Label |
-|---|---|---|---|
-| Esempio | [esempio.md](esempio.md) | `ESE` | `mod:esempio` |
+| Modulo  | File                     | Prefisso ID | Label         |
+| ------- | ------------------------ | ----------- | ------------- |
+| Esempio | [esempio.md](esempio.md) | `ESE`       | `mod:esempio` |
 
 ## Stati dei requisiti
 

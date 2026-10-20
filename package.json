@@ -1,0 +1,16 @@
+{
+  "name": "ron1n",
+  "private": true,
+  "description": "Hub ron1n: documentazione, infra del server e template delle app",
+  "scripts": {
+    "format": "prettier --config .prettierrc.json --write .",
+    "format:check": "prettier --config .prettierrc.json --check .",
+    "lint:md": "markdownlint-cli2",
+    "validate:infra": "scripts/validate-infra.sh",
+    "check": "npm run format:check && npm run lint:md && npm run validate:infra"
+  },
+  "devDependencies": {
+    "markdownlint-cli2": "^0.23.3",
+    "prettier": "^3.9.10"
+  }
+}

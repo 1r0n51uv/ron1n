@@ -7,11 +7,13 @@ Prefisso ID: `<PRE>` · Label: `mod:<modulo>`
 ## Requisiti
 
 ### <PRE>-001 · <Titolo breve>
+
 Stato: proposto
 
 <!-- Cosa fa l'app dal punto di vista di chi la usa, non come è fatta. -->
 
 Accettazione:
+
 - [ ] <comportamento verificabile>
 - [ ] <comportamento verificabile>
 
