@@ -12,3 +12,8 @@ status.ron1n.home {
 torrent.ron1n.home {
 	reverse_proxy qbittorrent:8080
 }
+
+# Interfaccia web di Glances (stack glances, rete dell'host). Solo tailnet.
+glances.ron1n.home {
+	reverse_proxy host.docker.internal:61208
+}
