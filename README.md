@@ -8,7 +8,7 @@ girano. Ogni app vive nel suo repo.
 
 | Progetto | Cosa è | Repo | Stato |
 |---|---|---|---|
-| ron1nOS | Dashboard dell'homelab: pasti, allenamenti, peso, casa, server, container, download, note | _da creare_ | design pronto |
+| ron1nOS | Dashboard dell'homelab: pasti, allenamenti, peso, casa, server, container, download, note | [1r0n51uv/ron1nOS](https://github.com/1r0n51uv/ron1nOS) | MVP desktop con dati mock |
 | ron1nOS iOS | Versione iOS della dashboard | _da creare_ | design pronto |
 | 1r0-pkm | App iOS/Watch per palestra e dieta, API Fastify + Postgres | [1r0n51uv/1r0-pkm](https://github.com/1r0n51uv/1r0-pkm) | beta |
 
