@@ -7,3 +7,8 @@
 status.ron1n.home {
 	reverse_proxy uptime-kuma:3001
 }
+
+# Web UI e Web API di qBittorrent (stack torrent). Solo tailnet.
+torrent.ron1n.home {
+	reverse_proxy qbittorrent:8080
+}

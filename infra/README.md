@@ -8,6 +8,7 @@ Uno stack Docker Compose per cartella. Sul server il repo è clonato in
 | `proxy` | Caddy, reverse proxy per tutti i servizi web |
 | `monitoring` | Uptime Kuma |
 | `updates` | Watchtower, aggiorna solo i container con l'etichetta di opt-in |
+| `torrent` | qBittorrent, client torrent usato dal modulo Download di ron1nOS ([README](torrent/README.md)) |
 
 ## Avvio
 
@@ -16,6 +17,7 @@ docker network create proxy        # una volta sola
 cd /opt/ron1n/infra/proxy && docker compose up -d
 cd ../monitoring && docker compose up -d
 cd ../updates && docker compose up -d
+cd ../torrent && cp .env.example .env && docker compose up -d
 ```
 
 ## Aggiungere un servizio
