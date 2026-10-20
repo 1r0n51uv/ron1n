@@ -1,0 +1,31 @@
+# Verifica di ogni PR. Il template è per un'app Node: adatta i passi allo
+# stack. Il nome del job (ci) è il check richiesto dalla branch protection.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Build immagine (senza push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false

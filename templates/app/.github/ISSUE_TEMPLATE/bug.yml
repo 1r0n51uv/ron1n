@@ -1,0 +1,28 @@
+name: Bug
+description: Comportamento diverso da quello descritto nella specifica
+title: "[bug] "
+labels: ["type:bug"]
+body:
+  - type: input
+    id: requisito
+    attributes:
+      label: Requisito violato
+      description: ID del requisito, se esiste
+  - type: textarea
+    id: passi
+    attributes:
+      label: Come riprodurlo
+    validations:
+      required: true
+  - type: textarea
+    id: atteso
+    attributes:
+      label: Cosa ti aspettavi
+    validations:
+      required: true
+  - type: textarea
+    id: ottenuto
+    attributes:
+      label: Cosa succede invece
+    validations:
+      required: true

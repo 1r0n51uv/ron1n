@@ -23,8 +23,10 @@ cd ../updates && docker compose up -d
 1. Crea `infra/<nome>/compose.yaml` e collega il servizio alla rete `proxy`.
 2. Aggiungi un blocco in `proxy/Caddyfile`, poi
    `docker compose -f proxy/compose.yaml exec caddy caddy reload --config /etc/caddy/Caddyfile`.
-3. Per le immagini delle tue app su GHCR, aggiungi
-   `com.centurylinklabs.watchtower.enable: "true"` così Watchtower le aggiorna.
+3. Per le immagini delle tue app su GHCR parti da
+   [`_app-template/compose.yaml`](_app-template/compose.yaml): ha già
+   l'etichetta `com.centurylinklabs.watchtower.enable: "true"`, così
+   Watchtower le aggiorna (vedi [flusso di sviluppo](../docs/flusso-sviluppo.md)).
 
 ## Spostare 1r0-pkm da EC2
 

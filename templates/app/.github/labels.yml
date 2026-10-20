@@ -1,0 +1,32 @@
+# Schema label comune a tutti i repo ron1n. Le label mod:* si aggiungono
+# insieme al file di specifica del modulo.
+- name: "type:feature"
+  color: "1f6feb"
+  description: Nuova funzionalità da un requisito
+- name: "type:bug"
+  color: "d73a4a"
+  description: Comportamento diverso dalla specifica
+- name: "type:chore"
+  color: "8b949e"
+  description: Manutenzione, dipendenze, refactor
+- name: "type:docs"
+  color: "0e8a16"
+  description: Documentazione e specifiche
+- name: "type:infra"
+  color: "5319e7"
+  description: CI, Docker, deploy
+- name: "prio:alta"
+  color: "ff2a2a"
+- name: "prio:media"
+  color: "fbca04"
+- name: "prio:bassa"
+  color: "c2e0c6"
+- name: "spec"
+  color: "000000"
+  description: Cambia una specifica
+- name: "blocked"
+  color: "b60205"
+  description: In attesa di qualcos'altro
+# - name: "mod:esempio"
+#   color: "bfd4f2"
+#   description: Modulo esempio (docs/specs/esempio.md)

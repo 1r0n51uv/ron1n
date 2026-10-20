@@ -19,6 +19,13 @@ IBM Plex Sans, JetBrains Mono, Shippori Mincho. Logo: sigillo Hanko · Fasce.
 Il design system ron1nOS (namespace `Ron1n`, 17 componenti React, token) è
 la fonte di verità per tutte le interfacce.
 
+## Come si sviluppa
+
+Ogni app segue lo stesso flusso: specifica, issue con label, PR con CI,
+immagine su GHCR, aggiornamento automatico sul server. Dettagli in
+[`docs/flusso-sviluppo.md`](docs/flusso-sviluppo.md), template per un nuovo
+repo in [`templates/app/`](templates/app/).
+
 ## Home server
 
 Mini PC Ryzen 5 5300U, 16 GB RAM, Debian + Docker Compose. Configurazione

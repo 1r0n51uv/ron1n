@@ -1,0 +1,27 @@
+name: Funzionalità
+description: Task che implementa un requisito della specifica
+title: "[ID] "
+labels: ["type:feature"]
+body:
+  - type: input
+    id: requisito
+    attributes:
+      label: Requisito
+      description: ID e link alla specifica, es. PASTI-003 in docs/specs/pasti.md
+    validations:
+      required: true
+  - type: textarea
+    id: descrizione
+    attributes:
+      label: Cosa deve fare
+    validations:
+      required: true
+  - type: textarea
+    id: accettazione
+    attributes:
+      label: Criteri di accettazione
+      description: Copiati dalla specifica
+      value: |
+        - [ ] 
+    validations:
+      required: true
