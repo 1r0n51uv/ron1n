@@ -1,0 +1,24 @@
+# Glances: CPU, RAM, dischi, rete, temperature e consumo per container del
+# server, esposti con la sua API REST. Gira nella rete e nei processi
+# dell'host, altrimenti vedrebbe solo sé stesso. Per questo non può stare
+# sulla rete proxy: ascolta solo sull'IP del bridge docker0 (172.17.0.1),
+# raggiungibile dai container ma non dalla LAN né dalla tailnet.
+name: glances
+
+services:
+  glances:
+    image: nicolargo/glances:4.5.8-full
+    restart: unless-stopped
+    network_mode: host
+    pid: host
+    environment:
+      TZ: Europe/Rome
+      GLANCES_OPT: "-w --bind 172.17.0.1 --port 61208 --disable-autodiscover"
+    volumes:
+      - ./glances.conf:/glances/conf/glances.conf:ro
+      # Consumo per container. Il socket dà pieno controllo di Docker anche
+      # in sola lettura: vedi README, "Socket Docker".
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Spazio occupato sul disco dell'host.
+      - /:/rootfs:ro
+      - /etc/os-release:/etc/os-release:ro
