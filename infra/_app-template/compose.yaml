@@ -4,7 +4,7 @@ name: <app>
 
 services:
   app:
-    image: ghcr.io/1r0n51uv/<app>:main   # rollback: :sha-<commit>
+    image: ghcr.io/1r0n51uv/<app>:main # rollback: :sha-<commit>
     restart: unless-stopped
     env_file: .env
     labels:

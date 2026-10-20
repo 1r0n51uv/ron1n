@@ -15,5 +15,6 @@ Closes #
 ## Checklist
 
 - [ ] Stato dei requisiti aggiornato a `fatto` in `docs/specs/`
-- [ ] Test aggiunti o aggiornati
+- [ ] Test unit ed e2e aggiunti o aggiornati
+- [ ] `npm run check` pulito in locale
 - [ ] CI verde

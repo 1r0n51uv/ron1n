@@ -1,0 +1,43 @@
+# Verifica di ogni PR sul hub: formato e lint dei documenti, stack di infra/
+# e workflow (anche quelli del template). Il job ci è il check richiesto.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CADDY_VERSION: 2.10.2
+  ACTIONLINT_VERSION: 1.7.7
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint:md
+      - name: Installa caddy e actionlint
+        run: |
+          mkdir -p "$RUNNER_TEMP/bin"
+          curl -sSL "https://github.com/caddyserver/caddy/releases/download/v${CADDY_VERSION}/caddy_${CADDY_VERSION}_linux_amd64.tar.gz" \
+            | tar xz -C "$RUNNER_TEMP/bin" caddy
+          curl -sSL "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" \
+            | tar xz -C "$RUNNER_TEMP/bin" actionlint
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+      - run: npm run validate:infra
+      - name: Lint dei workflow
+        run: actionlint .github/workflows/*.yml templates/app/.github/workflows/*.yml

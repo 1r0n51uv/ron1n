@@ -1,0 +1,21 @@
+// Lint del Markdown. Lo stile (a capo, tabelle) lo decide Prettier: qui solo
+// regole di struttura e link.
+{
+  "config": {
+    "default": true,
+    // Lunghezza delle righe: decide Prettier.
+    "MD013": false,
+    // Blocchi di codice senza linguaggio, come gli schemi ASCII.
+    "MD040": false,
+    // Stessi titoli in sezioni diverse.
+    "MD024": { "siblings_only": true },
+    // Segnaposto come <app> nei template.
+    "MD033": false,
+    // URL nudi ammessi.
+    "MD034": false,
+    // Template di PR e issue senza titolo di primo livello.
+    "MD041": false,
+  },
+  "globs": ["**/*.md"],
+  "ignores": ["node_modules/**"],
+}

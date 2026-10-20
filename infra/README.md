@@ -3,13 +3,13 @@
 Uno stack Docker Compose per cartella. Sul server il repo è clonato in
 `/opt/ron1n`.
 
-| Stack | Contenuto |
-|---|---|
-| `proxy` | Caddy, reverse proxy per tutti i servizi web |
-| `monitoring` | Uptime Kuma |
-| `updates` | Watchtower, aggiorna solo i container con l'etichetta di opt-in |
-| `torrent` | qBittorrent, client torrent usato dal modulo Download di ron1nOS ([README](torrent/README.md)) |
-| `glances` | Glances, risorse del server per il modulo Server di ron1nOS ([README](glances/README.md)) |
+| Stack        | Contenuto                                                                                      |
+| ------------ | ---------------------------------------------------------------------------------------------- |
+| `proxy`      | Caddy, reverse proxy per tutti i servizi web                                                   |
+| `monitoring` | Uptime Kuma                                                                                    |
+| `updates`    | Watchtower, aggiorna solo i container con l'etichetta di opt-in                                |
+| `torrent`    | qBittorrent, client torrent usato dal modulo Download di ron1nOS ([README](torrent/README.md)) |
+| `glances`    | Glances, risorse del server per il modulo Server di ron1nOS ([README](glances/README.md))      |
 
 ## Avvio
 

@@ -1,0 +1,33 @@
+{
+  "$comment": "Script npm comuni alle app ron1n: copiali in package.json. La CI li chiama per nome.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build && npm run test:e2e"
+  },
+  "devDependencies": [
+    "eslint@^9",
+    "@eslint/js@^9",
+    "typescript-eslint",
+    "eslint-plugin-react-hooks",
+    "eslint-plugin-react-refresh",
+    "eslint-config-prettier",
+    "globals",
+    "prettier",
+    "prettier-plugin-tailwindcss",
+    "vitest",
+    "jsdom",
+    "@testing-library/react",
+    "@testing-library/dom",
+    "@testing-library/jest-dom",
+    "@playwright/test"
+  ]
+}

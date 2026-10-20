@@ -6,7 +6,7 @@ services:
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:5.3.0
     restart: unless-stopped
-    stop_grace_period: 30s   # chiusura pulita anche con molti torrent
+    stop_grace_period: 30s # chiusura pulita anche con molti torrent
     env_file: .env
     environment:
       WEBUI_PORT: "8080"
