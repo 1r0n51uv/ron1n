@@ -8,24 +8,28 @@ tramite la sua Web API (modulo Download, specifica nel repo ron1nOS in
 
 ```sh
 cd /opt/ron1n/infra/torrent
-cp .env.example .env            # PUID/PGID da `id`, cartella download
+cp .env.example .env            # PUID/PGID da `id`, cartella download, credenziali
 sudo mkdir -p /srv/downloads && sudo chown 1000:1000 /srv/downloads
 docker compose up -d
-docker compose logs qbittorrent | grep -i password
+docker compose logs qbittorrent | grep webui-credentials
 ```
 
-Il log stampa una password temporanea per l'utente `admin`. Apri
-`https://torrent.ron1n.home` (via Tailscale) e in Strumenti → Opzioni →
-Web UI:
+Utente e password della Web UI vengono da `QBT_USERNAME` e `QBT_PASSWORD`
+nel `.env` (default `admin`/`admin`). Lo script
+[`init/10-webui-credentials`](init/10-webui-credentials) li scrive in
+`qBittorrent.conf` a ogni avvio, come hash PBKDF2: per cambiarli si
+modifica il `.env` e si riavvia il container. Una password cambiata dalla
+Web UI viene sovrascritta al riavvio successivo. Lo script deve restare
+eseguibile e di proprietà di root, altrimenti l'immagine lo salta.
 
-1. **Autenticazione:** cambia utente e password (se non la cambi, a ogni
-   riavvio ne viene generata una nuova). Salvale nel password manager e
-   nel `.env` della dashboard, mai in git.
-2. **Non attivare** "Salta l'autenticazione per i client in localhost" né
+Apri `https://torrent.ron1n.home` (via Tailscale) e in Strumenti → Opzioni
+→ Web UI:
+
+1. **Non attivare** "Salta l'autenticazione per i client in localhost" né
    la whitelist di sottoreti: sulla rete `proxy` ci sono altri container.
-3. Lascia attive la protezione CSRF, il clickjacking e la validazione
+2. Lascia attive la protezione CSRF, il clickjacking e la validazione
    dell'header Host.
-4. **Supporto reverse proxy:** attivalo e indica come proxy fidato la
+3. **Supporto reverse proxy:** attivalo e indica come proxy fidato la
    sottorete della rete `proxy` (`docker network inspect proxy`), così
    qBittorrent vede l'IP vero del client e il ban dopo troppi login
    falliti colpisce il client giusto.
