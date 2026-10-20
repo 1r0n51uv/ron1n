@@ -17,6 +17,9 @@ services:
     volumes:
       - qbittorrent_config:/config
       - ${DOWNLOADS_DIR:-/srv/downloads}:/downloads
+      # Script eseguiti dall'immagine prima di qBittorrent: impostano
+      # utente e password della Web UI da QBT_USERNAME/QBT_PASSWORD.
+      - ./init:/custom-cont-init.d:ro
     networks:
       - proxy
 
