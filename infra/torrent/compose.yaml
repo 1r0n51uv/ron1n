@@ -1,0 +1,28 @@
+# qBittorrent (immagine linuxserver). La Web UI passa solo da Caddy, sulla
+# rete proxy; sull'host si apre soltanto la porta BitTorrent per i peer.
+name: torrent
+
+services:
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:5.3.0
+    restart: unless-stopped
+    stop_grace_period: 30s   # chiusura pulita anche con molti torrent
+    env_file: .env
+    environment:
+      WEBUI_PORT: "8080"
+      TORRENTING_PORT: ${TORRENTING_PORT:-6881}
+    ports:
+      - "${TORRENTING_PORT:-6881}:${TORRENTING_PORT:-6881}"
+      - "${TORRENTING_PORT:-6881}:${TORRENTING_PORT:-6881}/udp"
+    volumes:
+      - qbittorrent_config:/config
+      - ${DOWNLOADS_DIR:-/srv/downloads}:/downloads
+    networks:
+      - proxy
+
+volumes:
+  qbittorrent_config:
+
+networks:
+  proxy:
+    external: true
