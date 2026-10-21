@@ -10,6 +10,7 @@ Uno stack Docker Compose per cartella. Sul server il repo è clonato in
 | `updates`    | Watchtower, aggiorna solo i container con l'etichetta di opt-in                                |
 | `torrent`    | qBittorrent, client torrent usato dal modulo Download di ron1nOS ([README](torrent/README.md)) |
 | `glances`    | Glances, risorse del server per il modulo Server di ron1nOS ([README](glances/README.md))      |
+| `webtop`     | Desktop Linux (Debian + XFCE) nel browser su `desktop.ron1n.home` ([README](webtop/README.md)) |
 
 ## Avvio
 
@@ -20,6 +21,7 @@ cd ../monitoring && docker compose up -d
 cd ../updates && docker compose up -d
 cd ../torrent && cp .env.example .env && docker compose up -d
 cd ../glances && docker compose up -d
+cd ../webtop && cp .env.example .env   # cambia la password, poi docker compose up -d
 ```
 
 ## Aggiungere un servizio
