@@ -4,6 +4,11 @@
 	local_certs
 }
 
+# Dashboard ron1nOS (stack ron1nos): SPA e API /api/v1. Solo tailnet.
+ron1n.home {
+	reverse_proxy ron1nos:8080
+}
+
 status.ron1n.home {
 	reverse_proxy uptime-kuma:3001
 }

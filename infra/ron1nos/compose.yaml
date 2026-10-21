@@ -1,0 +1,22 @@
+# Dashboard ron1nOS: un solo container Node che serve la SPA e l'API
+# /api/v1 sulla porta 8080, pubblicato da Caddy su ron1n.home (solo
+# tailnet). Parla con qBittorrent sulla rete proxy. Il servizio si chiama
+# ron1nos, non app: sulla rete proxy il nome deve essere unico.
+name: ron1nos
+
+services:
+  ron1nos:
+    image: ghcr.io/1r0n51uv/ron1nos:main # rollback: :sha-<commit>
+    restart: unless-stopped
+    env_file: .env
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+    # Per i servizi in rete host, come Glances (modulo Server).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true
