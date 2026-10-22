@@ -17,9 +17,3 @@
    `sudo tailscale up --ssh`.
 8. **Repo:** `sudo git clone https://github.com/1r0n51uv/ron1n /opt/ron1n`
    e segui [`infra/README.md`](../infra/README.md).
-
-## Backup
-
-- restic copia `/srv/backup` e i volumi Docker su disco esterno e su
-  Backblaze B2.
-- Prova un ripristino almeno una volta, prima di spegnere EC2.
