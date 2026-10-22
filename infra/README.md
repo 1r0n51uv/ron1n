@@ -38,10 +38,3 @@ cd ../webtop && cp .env.example .env   # cambia la password, poi docker compose 
    [`_app-template/compose.yaml`](_app-template/compose.yaml): ha già
    l'etichetta `com.centurylinklabs.watchtower.enable: "true"`, così
    Watchtower le aggiorna (vedi [flusso di sviluppo](../docs/flusso-sviluppo.md)).
-
-## Spostare 1r0-pkm da EC2
-
-Il compose di 1r0-pkm include un suo Caddy sulla 80/443, che qui va in
-conflitto. Sul server si avviano solo `db` e `api`, con `api` collegata alla
-rete `proxy`; il dominio pubblico passa da Cloudflare Tunnel. Prima di
-spegnere EC2: `pg_dump` dei due database e ripristino sul nuovo Postgres.
