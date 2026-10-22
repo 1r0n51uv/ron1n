@@ -7,7 +7,9 @@
     "format:check": "prettier --config .prettierrc.json --check .",
     "lint:md": "markdownlint-cli2",
     "validate:infra": "scripts/validate-infra.sh",
-    "check": "npm run format:check && npm run lint:md && npm run validate:infra"
+    "check": "npm run format:check && npm run lint:md && npm run lint:sh && npm run test:sh && npm run validate:infra",
+    "lint:sh": "shellcheck infra.sh scripts/*.sh",
+    "test:sh": "scripts/test-infra-sh.sh"
   },
   "devDependencies": {
     "markdownlint-cli2": "^0.23.3",

@@ -1,5 +1,5 @@
-# Verifica di ogni PR sul hub: formato e lint dei documenti, stack di infra/
-# e workflow (anche quelli del template). Il job ci è il check richiesto.
+# Verifica di ogni PR sul hub: formato e lint dei documenti, script shell e
+# loro test, stack di infra/ e workflow (anche quelli del template). Il job ci è il check richiesto.
 name: ci
 
 on:
@@ -30,6 +30,9 @@ jobs:
       - run: npm ci
       - run: npm run format:check
       - run: npm run lint:md
+      # shellcheck è già sul runner ubuntu-latest.
+      - run: npm run lint:sh
+      - run: npm run test:sh
       - name: Installa caddy e actionlint
         run: |
           mkdir -p "$RUNNER_TEMP/bin"

@@ -14,24 +14,37 @@ Uno stack Docker Compose per cartella. Sul server il repo è clonato in
 | `ron1nos`    | Dashboard ron1nOS su `ron1n.home` ([README](ron1nos/README.md))                                |
 | `webtop`     | Desktop Linux (Debian + XFCE) nel browser su `desktop.ron1n.home` ([README](webtop/README.md)) |
 
-## Avvio
+## Avvio e spegnimento
+
+Tutti gli stack si gestiscono con [`infra.sh`](../infra.sh), dalla radice
+del repo (con `sudo` se il repo è di root, come in `/opt/ron1n`):
 
 ```sh
-docker network create proxy        # una volta sola
-docker network create db           # una volta sola
-cd /opt/ron1n/infra/proxy && docker compose up -d
-cd ../monitoring && docker compose up -d
-cd ../updates && docker compose up -d
-cd ../torrent && cp .env.example .env && docker compose up -d
-cd ../glances && docker compose up -d
-cd ../postgres && cp .env.example .env   # cambia le password, poi docker compose up -d
-cd ../ron1nos && cp .env.example .env && docker compose up -d
-cd ../webtop && cp .env.example .env   # cambia la password, poi docker compose up -d
+./infra.sh up              # avvia tutto, anche la prima volta
+./infra.sh down            # spegne tutto; volumi, .env e reti restano
+./infra.sh status          # container di ogni stack
+./infra.sh up torrent      # solo gli stack indicati
 ```
+
+Al primo avvio `up` crea le reti `proxy` e `db`, i `.env` mancanti da
+`.env.example` con password casuali (le stesse dove servono in due stack,
+come Postgres e ron1nOS) e la cartella dei download. Un `.env` esistente non
+viene mai toccato: per cambiare una password modifica il `.env` e rilancia
+`up` (la password di un database già creato va cambiata anche in Postgres,
+vedi il suo [README](postgres/README.md)).
+
+L'ordine di avvio è in `ORDER` dentro lo script: Postgres per primo,
+Caddy per ultimo; `down` va al contrario. Uno stack nuovo parte dopo gli
+altri senza toccare lo script; se ha un `.env.example` e il `.env` non c'è,
+non viene avviato finché non lo crei. Specifica:
+[`docs/specs/infra.md`](../docs/specs/infra.md).
 
 ## Aggiungere un servizio
 
 1. Crea `infra/<nome>/compose.yaml` e collega il servizio alla rete `proxy`.
+   Se dipende da altri stack o deve partire prima, aggiungilo a `ORDER` in
+   [`infra.sh`](../infra.sh); se il suo `.env` ha password, aggiungi la
+   generazione in `make_envs`.
 2. Aggiungi un blocco in `proxy/Caddyfile`, poi
    `docker compose -f proxy/compose.yaml exec caddy caddy reload --config /etc/caddy/Caddyfile`.
 3. Per le immagini delle tue app su GHCR parti da

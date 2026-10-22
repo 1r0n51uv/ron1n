@@ -15,5 +15,7 @@
    gruppo `docker`.
 7. **Tailscale:** `curl -fsSL https://tailscale.com/install.sh | sh`, poi
    `sudo tailscale up --ssh`.
-8. **Repo:** `sudo git clone https://github.com/1r0n51uv/ron1n /opt/ron1n`
-   e segui [`infra/README.md`](../infra/README.md).
+8. **Repo:** `sudo git clone https://github.com/1r0n51uv/ron1n /opt/ron1n`.
+9. **Stack:** `cd /opt/ron1n && sudo ./infra.sh up` crea `.env`, reti e
+   cartelle e avvia tutto; `sudo ./infra.sh down` spegne. Dettagli in
+   [`infra/README.md`](../infra/README.md).

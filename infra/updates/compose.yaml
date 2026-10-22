@@ -10,6 +10,8 @@ services:
       WATCHTOWER_LABEL_ENABLE: "true"
       WATCHTOWER_CLEANUP: "true"
       WATCHTOWER_POLL_INTERVAL: "300"
+      # Watchtower 1.7.1 chiede l'API Docker 1.25, che Docker 29 rifiuta.
+      DOCKER_API_VERSION: "1.44"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       # Solo per immagini GHCR private, dopo `docker login ghcr.io` da root:
