@@ -177,8 +177,9 @@ make_envs() {
     "PASSWORD=$(rand)"
 
   if [ -f "$INFRA/ron1nos/compose.yaml" ] && [ ! -f "$INFRA/ron1nos/.env" ]; then
-    [ -f "$INFRA/postgres/.env" ] && [ -f "$INFRA/torrent/.env" ] ||
+    if [ ! -f "$INFRA/postgres/.env" ] || [ ! -f "$INFRA/torrent/.env" ]; then
       die "per creare ron1nos/.env servono postgres/.env e torrent/.env"
+    fi
     db_pw=$(env_get "$INFRA/postgres/.env" RON1NOS_DB_PASSWORD)
     qbt_user=$(env_get "$INFRA/torrent/.env" QBT_USERNAME)
     qbt_pw=$(env_get "$INFRA/torrent/.env" QBT_PASSWORD)
