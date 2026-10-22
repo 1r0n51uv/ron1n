@@ -20,7 +20,6 @@
 
 ## Backup
 
-- Dump notturno di Postgres con `pg_dump` in `/srv/backup/pg`.
 - restic copia `/srv/backup` e i volumi Docker su disco esterno e su
   Backblaze B2.
 - Prova un ripristino almeno una volta, prima di spegnere EC2.

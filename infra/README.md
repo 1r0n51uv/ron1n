@@ -10,7 +10,7 @@ Uno stack Docker Compose per cartella. Sul server il repo è clonato in
 | `updates`    | Watchtower, aggiorna solo i container con l'etichetta di opt-in                                |
 | `torrent`    | qBittorrent, client torrent usato dal modulo Download di ron1nOS ([README](torrent/README.md)) |
 | `glances`    | Glances, risorse del server per il modulo Server di ron1nOS ([README](glances/README.md))      |
-| `postgres`   | Postgres condiviso dalle app, con dump notturni ([README](postgres/README.md))                 |
+| `postgres`   | Postgres condiviso dalle app ([README](postgres/README.md))                                    |
 | `ron1nos`    | Dashboard ron1nOS su `ron1n.home` ([README](ron1nos/README.md))                                |
 | `webtop`     | Desktop Linux (Debian + XFCE) nel browser su `desktop.ron1n.home` ([README](webtop/README.md)) |
 
