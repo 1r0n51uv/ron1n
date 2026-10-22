@@ -30,18 +30,6 @@ Le tabelle le crea ron1nOS da solo all'avvio, con le sue migrazioni.
   sulla rete esterna `db`, a cui si collega solo chi ha un database.
 - Per una console: `docker compose exec postgres psql -U postgres`.
 
-## Backup
-
-Il container `backup` fa ogni notte alle 3:30 un `pg_dump` di ogni database
-in `/srv/backups/postgres` (formato custom) più i ruoli
-(`globals-*.sql`), e tiene gli ultimi 14 giorni. La cartella entra nel
-backup del server (restic). Ripristino di un database:
-
-```sh
-docker compose exec -T postgres pg_restore -U postgres -d ron1nos --clean --if-exists \
-  < /srv/backups/postgres/ron1nos-AAAAMMGG-HHMM.dump
-```
-
 ## Nuova app
 
 `init/` gira solo con il volume vuoto. Su un Postgres già avviato:
@@ -58,4 +46,4 @@ Poi aggiungi uno script in `init/` per le installazioni nuove.
 
 Il tag è fisso (`16.10-alpine`): Watchtower non lo tocca. Un aggiornamento
 minore (16.x) basta cambiare il tag e `docker compose up -d`; uno maggiore
-(17) richiede dump e ripristino.
+(17) richiede un `pg_dump` e un ripristino a mano.

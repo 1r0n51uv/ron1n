@@ -1,8 +1,6 @@
 # Postgres condiviso dalle app ron1n: ogni app ha il suo database e il suo
 # utente (oggi ron1nos). Nessuna porta sull'host: le app lo raggiungono come
-# postgres:5432 sulla rete esterna db. Un secondo container fa un dump
-# notturno di ogni database in /srv/backups/postgres, che entra nel backup
-# del server.
+# postgres:5432 sulla rete esterna db.
 name: postgres
 
 services:
@@ -23,25 +21,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - db
-
-  # Dump giornaliero alle 3:30, tenuti 14 giorni.
-  backup:
-    image: postgres:16.10-alpine
-    restart: unless-stopped
-    env_file: .env
-    environment:
-      PGHOST: postgres
-      PGUSER: postgres
-      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
-    entrypoint: ["/bin/sh", "/backup.sh"]
-    volumes:
-      - ./backup.sh:/backup.sh:ro
-      - ${BACKUP_DIR:-/srv/backups/postgres}:/backups
-    depends_on:
-      postgres:
-        condition: service_healthy
     networks:
       - db
 
