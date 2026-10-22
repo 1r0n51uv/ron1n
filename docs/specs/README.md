@@ -6,9 +6,10 @@ in [`flusso-sviluppo.md`](../flusso-sviluppo.md).
 
 ## Moduli
 
-| Modulo | File                 | Prefisso ID | Label       |
-| ------ | -------------------- | ----------- | ----------- |
-| Infra  | [infra.md](infra.md) | `INFRA`     | `mod:infra` |
+| Modulo           | File                               | Prefisso ID | Label              |
+| ---------------- | ---------------------------------- | ----------- | ------------------ |
+| Infra            | [infra.md](infra.md)               | `INFRA`     | `mod:infra`        |
+| Setup del server | [server-setup.md](server-setup.md) | `SETUP`     | `mod:server-setup` |
 
 ## Stati dei requisiti
 

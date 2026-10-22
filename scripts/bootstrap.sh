@@ -1,0 +1,300 @@
+#!/bin/sh
+# Setup del mini PC ron1n: da Debian 13 appena installato (solo curl) allo
+# stack di infra/ avviato e raggiungibile dalla tailnet.
+#
+#   curl -fsSL https://raw.githubusercontent.com/1r0n51uv/ron1n/main/scripts/bootstrap.sh | sh
+#
+# Da root (`su -`). Si può rilanciare: rifà solo ciò che manca, non tocca
+# i .env esistenti né i dati degli stack. Niente backup, per scelta.
+#
+# Variabili d'ambiente facoltative:
+#   RON1N_USER      utente amministratore (default: il primo con UID >= 1000)
+#   TS_AUTHKEY      chiave Tailscale; senza, lo script mostra il link di login
+#   RON1N_REPO      repo da clonare (default: https://github.com/1r0n51uv/ron1n)
+#   RON1N_BRANCH    branch (default: main)
+#   RON1N_DIR       cartella del repo (default: /opt/ron1n)
+#   RON1N_SKIP_TAILSCALE=1  salta Tailscale (prove)
+set -eu
+
+RON1N_REPO=${RON1N_REPO:-https://github.com/1r0n51uv/ron1n}
+RON1N_BRANCH=${RON1N_BRANCH:-main}
+RON1N_DIR=${RON1N_DIR:-/opt/ron1n}
+DOWNLOADS_DIR=/srv/downloads
+
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+export DEBIAN_FRONTEND=noninteractive
+
+step() { printf '\n\033[1;31m==>\033[0m \033[1m%s\033[0m\n' "$*"; }
+info() { printf '    %s\n' "$*"; }
+die() {
+  printf '\n\033[1;31merrore:\033[0m %s\n' "$*" >&2
+  exit 1
+}
+
+apt_install() {
+  apt-get install -y -q -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold "$@" </dev/null
+}
+
+# docker compose dentro la cartella dello stack, così legge anche .env e
+# compose.override.yaml.
+compose() (
+  cd "$1"
+  shift
+  docker compose "$@"
+)
+
+# Valore di KEY in un file .env (ultima occorrenza, senza commenti).
+env_get() {
+  sed -n "s/^$2=//p" "$1" | tail -n 1
+}
+
+check_system() {
+  step "Controllo del sistema"
+  [ "$(id -u)" -eq 0 ] || die "va eseguito da root: su - poi rilancia il comando"
+  [ -r /etc/os-release ] || die "non trovo /etc/os-release"
+  # shellcheck disable=SC1091
+  . /etc/os-release
+  if [ "${ID:-}" != debian ] || [ "${VERSION_CODENAME:-}" != trixie ]; then
+    die "serve Debian 13 (trixie), qui c'è ${PRETTY_NAME:-un sistema sconosciuto}"
+  fi
+  [ "$(dpkg --print-architecture)" = amd64 ] || die "serve un sistema amd64"
+  info "${PRETTY_NAME}"
+}
+
+find_user() {
+  step "Utente amministratore"
+  if [ -n "${RON1N_USER:-}" ]; then
+    ADMIN=$RON1N_USER
+  else
+    ADMIN=$(getent passwd | awk -F: '$3 >= 1000 && $3 < 60000 { print $1; exit }')
+  fi
+  [ -n "$ADMIN" ] || die "nessun utente normale: crealo con adduser <nome>, oppure indica RON1N_USER"
+  getent passwd "$ADMIN" >/dev/null || die "l'utente $ADMIN non esiste"
+  ADMIN_UID=$(id -u "$ADMIN")
+  ADMIN_GID=$(id -g "$ADMIN")
+  ADMIN_HOME=$(getent passwd "$ADMIN" | cut -d: -f6)
+  info "$ADMIN (uid $ADMIN_UID, gid $ADMIN_GID)"
+}
+
+install_base() {
+  step "Pacchetti base"
+  apt-get update -q </dev/null
+  apt_install ca-certificates curl git sudo openssl ufw lm-sensors unattended-upgrades
+  cat >/etc/apt/apt.conf.d/20auto-upgrades <<'EOF'
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+EOF
+  info "aggiornamenti di sicurezza automatici attivi"
+}
+
+install_docker() {
+  step "Docker Engine e Compose"
+  install -m 0755 -d /etc/apt/keyrings
+  if [ ! -s /etc/apt/keyrings/docker.asc ]; then
+    curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+    chmod a+r /etc/apt/keyrings/docker.asc
+  fi
+  cat >/etc/apt/sources.list.d/docker.sources <<'EOF'
+Types: deb
+URIs: https://download.docker.com/linux/debian
+Suites: trixie
+Components: stable
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF
+  # Log dei container a rotazione: al massimo 3 file da 10 MB ciascuno.
+  mkdir -p /etc/docker
+  if [ ! -f /etc/docker/daemon.json ]; then
+    cat >/etc/docker/daemon.json <<'EOF'
+{
+  "log-driver": "json-file",
+  "log-opts": { "max-size": "10m", "max-file": "3" }
+}
+EOF
+  fi
+  apt-get update -q </dev/null
+  apt_install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  systemctl enable --now docker >/dev/null
+  info "$(docker --version)"
+  info "$(docker compose version)"
+}
+
+setup_user() {
+  step "Gruppi dell'utente"
+  usermod -aG sudo,docker "$ADMIN"
+  info "$ADMIN è in sudo e docker (vale dal prossimo login)"
+}
+
+install_tailscale() {
+  step "Tailscale"
+  if [ "${RON1N_SKIP_TAILSCALE:-0}" = 1 ]; then
+    info "saltato (RON1N_SKIP_TAILSCALE=1)"
+    return 0
+  fi
+  if ! command -v tailscale >/dev/null; then
+    curl -fsSL https://pkgs.tailscale.com/stable/debian/trixie.noarmor.gpg \
+      -o /usr/share/keyrings/tailscale-archive-keyring.gpg
+    curl -fsSL https://pkgs.tailscale.com/stable/debian/trixie.tailscale-keyring.list \
+      -o /etc/apt/sources.list.d/tailscale.list
+    apt-get update -q </dev/null
+    apt_install tailscale
+  fi
+  systemctl enable --now tailscaled >/dev/null
+  if tailscale ip -4 >/dev/null 2>&1; then
+    info "già nella tailnet: $(tailscale ip -4)"
+    return 0
+  fi
+  if [ -n "${TS_AUTHKEY:-}" ]; then
+    tailscale up --ssh --hostname=ron1n --auth-key="$TS_AUTHKEY"
+  else
+    info "apri il link che compare qui sotto per aggiungere il server alla tailnet"
+    tailscale up --ssh --hostname=ron1n
+  fi
+  info "nella tailnet: $(tailscale ip -4)"
+}
+
+setup_ssh() {
+  step "SSH"
+  if [ ! -d /etc/ssh/sshd_config.d ]; then
+    info "server SSH non installato, salto"
+    return 0
+  fi
+  conf=/etc/ssh/sshd_config.d/10-ron1n.conf
+  echo "PermitRootLogin no" >"$conf.tmp"
+  if [ -s "$ADMIN_HOME/.ssh/authorized_keys" ]; then
+    echo "PasswordAuthentication no" >>"$conf.tmp"
+    info "login con password spento: $ADMIN ha una chiave"
+  else
+    info "login con password lasciato acceso: copia una chiave con ssh-copy-id e rilancia"
+  fi
+  mv "$conf.tmp" "$conf"
+  sshd -t || die "configurazione SSH non valida, controlla $conf"
+  systemctl reload ssh
+}
+
+setup_firewall() {
+  step "Firewall"
+  ext_if=$(ip route show default | awk '{ print $5; exit }')
+  [ -n "$ext_if" ] || die "non trovo l'interfaccia di rete principale"
+  torrent_port=6881
+  if [ -f "$RON1N_DIR/infra/torrent/.env" ]; then
+    p=$(env_get "$RON1N_DIR/infra/torrent/.env" TORRENTING_PORT)
+    [ -n "$p" ] && torrent_port=$p
+  fi
+
+  # Docker pubblica le porte scavalcando ufw: il filtro per i container
+  # sta nella catena DOCKER-USER. Da $ext_if (LAN e internet) passano solo
+  # le risposte e la porta BitTorrent; dalla tailnet passa tutto.
+  rules=/etc/ufw/after.rules
+  sed -i '/^# BEGIN ron1n DOCKER-USER/,/^# END ron1n DOCKER-USER/d' "$rules"
+  cat >>"$rules" <<EOF
+# BEGIN ron1n DOCKER-USER
+*filter
+:DOCKER-USER - [0:0]
+-A DOCKER-USER -i $ext_if -m conntrack --ctstate RELATED,ESTABLISHED -j RETURN
+-A DOCKER-USER -i $ext_if -p tcp --dport $torrent_port -j RETURN
+-A DOCKER-USER -i $ext_if -p udp --dport $torrent_port -j RETURN
+-A DOCKER-USER -i $ext_if -j DROP
+COMMIT
+# END ron1n DOCKER-USER
+EOF
+
+  ufw default deny incoming >/dev/null
+  ufw default allow outgoing >/dev/null
+  ufw allow 22/tcp comment ssh >/dev/null
+  ufw allow in on tailscale0 comment tailnet >/dev/null
+  # Glances ascolta sull'IP di docker0: lo chiamano Caddy e ron1nOS.
+  ufw allow proto tcp from 172.16.0.0/12 to 172.17.0.1 port 61208 comment glances >/dev/null
+  ufw --force enable >/dev/null
+  ufw reload >/dev/null
+  info "aperti: ssh, tailnet, BitTorrent $torrent_port; porte dei container solo dalla tailnet ($ext_if filtrata)"
+}
+
+clone_repo() {
+  step "Repo ron1n in $RON1N_DIR"
+  if [ -d "$RON1N_DIR/.git" ]; then
+    [ -z "$(git -C "$RON1N_DIR" status --porcelain --untracked-files=no)" ] ||
+      die "$RON1N_DIR ha modifiche locali: sistemale (git -C $RON1N_DIR status) e rilancia"
+    git -C "$RON1N_DIR" fetch -q origin "$RON1N_BRANCH"
+    git -C "$RON1N_DIR" checkout -q "$RON1N_BRANCH"
+    git -C "$RON1N_DIR" merge -q --ff-only "origin/$RON1N_BRANCH" ||
+      die "$RON1N_DIR non si aggiorna con fast-forward"
+    info "aggiornato a $(git -C "$RON1N_DIR" rev-parse --short HEAD)"
+  else
+    git clone -q --branch "$RON1N_BRANCH" "$RON1N_REPO" "$RON1N_DIR"
+    info "clonato a $(git -C "$RON1N_DIR" rev-parse --short HEAD)"
+  fi
+  mkdir -p "$DOWNLOADS_DIR"
+  chown "$ADMIN_UID:$ADMIN_GID" "$DOWNLOADS_DIR"
+  info "$DOWNLOADS_DIR di $ADMIN"
+}
+
+# Reti, .env con password casuali coerenti fra stack e avvio di tutto:
+# lo fa infra.sh (docs/specs/infra.md). SUDO_UID/SUDO_GID dicono a
+# infra.sh di chi sono i file, come se lo lanciasse $ADMIN con sudo.
+start_stacks() {
+  step "Avvio degli stack"
+  SUDO_UID=$ADMIN_UID SUDO_GID=$ADMIN_GID "$RON1N_DIR/infra.sh" up
+}
+
+summary() {
+  step "Fatto"
+  proxy=$RON1N_DIR/infra/proxy
+  hosts=$(sed -n 's/^\([a-z0-9.-]*\.home\) {$/\1/p' "$proxy/Caddyfile" | tr '\n' ' ')
+  ts_ip=$(tailscale ip -4 2>/dev/null || echo '<ip-tailscale>')
+
+  # Certificato radice di Caddy (local_certs), da installare sui client.
+  ca="$ADMIN_HOME/ron1n-caddy-root.crt"
+  i=0
+  while [ $i -lt 15 ]; do
+    if compose "$proxy" exec -T caddy \
+      cat /data/caddy/pki/authorities/local/root.crt >"$ca.tmp" 2>/dev/null && [ -s "$ca.tmp" ]; then
+      mv "$ca.tmp" "$ca"
+      chown "$ADMIN_UID:$ADMIN_GID" "$ca"
+      break
+    fi
+    i=$((i + 1))
+    sleep 2
+  done
+  rm -f "$ca.tmp"
+
+  echo
+  echo "  Server nella tailnet: $ts_ip"
+  echo
+  printf '%s\n' '  Sui client aggiungi a /etc/hosts (Windows: C:\Windows\System32\drivers\etc\hosts):'
+  echo "    $ts_ip $hosts"
+  echo
+  if [ -f "$ca" ]; then
+    echo "  Certificato radice di Caddy: $ca"
+    echo "  Copialo sui client (scp $ADMIN@$ts_ip:ron1n-caddy-root.crt .) e installalo come"
+    echo "  autorità attendibile, così i siti *.ron1n.home non danno errori di certificato."
+  else
+    echo "  Il certificato radice di Caddy non è ancora pronto: rilancia lo script tra poco."
+  fi
+  echo
+  echo "  Credenziali (sono nei .env in $RON1N_DIR/infra, leggibili solo da root):"
+  echo "    qBittorrent  $(env_get "$RON1N_DIR/infra/torrent/.env" QBT_USERNAME) / $(env_get "$RON1N_DIR/infra/torrent/.env" QBT_PASSWORD)"
+  echo "    Webtop       $(env_get "$RON1N_DIR/infra/webtop/.env" CUSTOM_USER) / $(env_get "$RON1N_DIR/infra/webtop/.env" PASSWORD)"
+  echo
+  echo "  Apri https://ron1n.home dalla tailnet. Per YAZIO vedi infra/ron1nos/README.md."
+  echo "  Stato dei container: docker ps (dopo un nuovo login di $ADMIN, o con sudo)."
+}
+
+main() {
+  check_system
+  find_user
+  install_base
+  install_docker
+  setup_user
+  install_tailscale
+  setup_ssh
+  clone_repo
+  setup_firewall
+  start_stacks
+  summary
+}
+
+# RON1N_BOOTSTRAP_LIB=1 carica solo le funzioni, per i test.
+if [ "${RON1N_BOOTSTRAP_LIB:-0}" != 1 ]; then
+  main "$@"
+fi

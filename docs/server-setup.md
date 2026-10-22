@@ -1,5 +1,20 @@
 # Primo setup del mini PC
 
+Dopo i passi 1-3, da root sul server (`su -`), il resto lo fa
+[`scripts/bootstrap.sh`](../scripts/bootstrap.sh): pacchetti, Docker,
+Tailscale, SSH, firewall, repo in `/opt/ron1n` e avvio degli stack con
+`./infra.sh up` (spec [SETUP](specs/server-setup.md)).
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/1r0n51uv/ron1n/main/scripts/bootstrap.sh | sh
+```
+
+Per tornare indietro, `sudo /opt/ron1n/scripts/cleanup.sh` chiede cosa
+eliminare (stack e dati, download, Docker, firewall, SSH, Tailscale, repo)
+e lo toglie.
+
+I passi sotto sono la stessa cosa fatta a mano.
+
 1. **BIOS:** aggiorna il firmware, attiva l'accensione automatica dopo un
    blackout (di solito "Restore on AC power loss") e disattiva il secure
    boot solo se l'installer lo richiede.
