@@ -10,6 +10,7 @@ Uno stack Docker Compose per cartella. Sul server il repo è clonato in
 | `updates`    | Watchtower, aggiorna solo i container con l'etichetta di opt-in                                |
 | `torrent`    | qBittorrent, client torrent usato dal modulo Download di ron1nOS ([README](torrent/README.md)) |
 | `glances`    | Glances, risorse del server per il modulo Server di ron1nOS ([README](glances/README.md))      |
+| `postgres`   | Postgres condiviso dalle app, con dump notturni ([README](postgres/README.md))                 |
 | `ron1nos`    | Dashboard ron1nOS su `ron1n.home` ([README](ron1nos/README.md))                                |
 | `webtop`     | Desktop Linux (Debian + XFCE) nel browser su `desktop.ron1n.home` ([README](webtop/README.md)) |
 
@@ -17,11 +18,13 @@ Uno stack Docker Compose per cartella. Sul server il repo è clonato in
 
 ```sh
 docker network create proxy        # una volta sola
+docker network create db           # una volta sola
 cd /opt/ron1n/infra/proxy && docker compose up -d
 cd ../monitoring && docker compose up -d
 cd ../updates && docker compose up -d
 cd ../torrent && cp .env.example .env && docker compose up -d
 cd ../glances && docker compose up -d
+cd ../postgres && cp .env.example .env   # cambia le password, poi docker compose up -d
 cd ../ron1nos && cp .env.example .env && docker compose up -d
 cd ../webtop && cp .env.example .env   # cambia la password, poi docker compose up -d
 ```
