@@ -12,6 +12,9 @@ Contesto per le sessioni di Claude che lavorano su questo repo.
 - Tutti gli stack si avviano e spengono con `./infra.sh up|down|status`
   (spec `docs/specs/infra.md`): uno stack nuovo con dipendenze va in `ORDER`,
   le sue password generate in `make_envs`.
+- Primo setup del server: `scripts/bootstrap.sh`; il suo opposto è
+  `scripts/cleanup.sh` (spec `docs/specs/server-setup.md`). Se il bootstrap
+  installa qualcosa di nuovo, il cleanup deve saperlo togliere.
 - Segreti solo in file `.env` non versionati; versiona un `.env.example`.
 - Immagini sempre con tag esplicito; niente `latest` per i servizi con dati.
 - Accesso privato via Tailscale, pubblico solo via Cloudflare Tunnel.
