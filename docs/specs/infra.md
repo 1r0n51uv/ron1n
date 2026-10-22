@@ -12,7 +12,7 @@ sistema: quello resta al primo setup del server
 
 ### INFRA-001 · Avviare tutti gli stack con un comando
 
-Stato: proposto
+Stato: fatto (#21)
 
 Dalla radice del repo (sul server `/opt/ron1n`) `./infra.sh up` accende
 tutti gli stack di `infra/` nell'ordine giusto.
@@ -35,7 +35,7 @@ Accettazione:
 
 ### INFRA-002 · Primo avvio senza passaggi a mano
 
-Stato: proposto
+Stato: fatto (#21)
 
 Su un server dove gli stack non sono mai partiti, `./infra.sh up` prepara
 da solo quello che serve, senza toccare ciò che esiste già.
@@ -58,7 +58,7 @@ Accettazione:
 
 ### INFRA-003 · Spegnere tutti gli stack con un comando
 
-Stato: proposto
+Stato: fatto (#21)
 
 `./infra.sh down` spegne tutti gli stack, nell'ordine inverso all'avvio.
 
@@ -74,7 +74,7 @@ Accettazione:
 
 ### INFRA-004 · Vedere lo stato degli stack
 
-Stato: proposto
+Stato: fatto (#21)
 
 `./infra.sh status` mostra, stack per stack, i container e il loro stato.
 `./infra.sh` senza comando o con un comando sconosciuto spiega l'uso.
