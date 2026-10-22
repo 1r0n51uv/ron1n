@@ -6,11 +6,12 @@ l'app iOS.
 
 ## Primo avvio
 
-Serve lo stack `torrent` già avviato, con le credenziali della Web UI.
+Servono gli stack `torrent`, con le credenziali della Web UI, e
+`postgres`, con il database `ron1nos` (vedi [README](../postgres/README.md)).
 
 ```sh
 cd /opt/ron1n/infra/ron1nos
-cp .env.example .env            # stesse credenziali del .env di torrent
+cp .env.example .env            # credenziali di torrent e DATABASE_URL di postgres
 docker compose up -d
 docker compose ps               # lo stato diventa healthy
 ```
@@ -29,5 +30,6 @@ vedi `updates/compose.yaml`.
 
 - La porta 8080 non è pubblicata sull'host: la raggiunge solo Caddy.
 - qBittorrent risponde come `qbittorrent:8080` sulla rete `proxy`.
+- Postgres risponde come `postgres:5432` sulla rete `db`.
 - `host.docker.internal` porta all'host, per i servizi in rete host come
   Glances (modulo Server, `172.17.0.1:61208`).
