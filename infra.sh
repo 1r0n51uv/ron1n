@@ -106,9 +106,10 @@ containers() {
   docker ps -a --filter "label=com.docker.compose.project=$(project_name "$1")" --format "$fmt"
 }
 
-# Valore di KEY in un file .env (ultima occorrenza, senza commenti).
+# Valore di KEY in un file .env (ultima occorrenza, senza commenti e
+# senza apici singoli).
 env_get() {
-  sed -n "s/^$2=//p" "$1" | tail -n 1
+  sed -n "s/^$2=//p" "$1" | tail -n 1 | sed "s/^'\(.*\)'\$/\1/"
 }
 
 # Password casuale, solo esadecimale: sicura anche dentro un URL.

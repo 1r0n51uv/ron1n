@@ -1,5 +1,5 @@
 #!/bin/sh
-# L'opposto di bootstrap.sh (SETUP-002): spegne gli stack e toglie, una
+# L'opposto di bootstrap.sh (SETUP-002, SETUP-004): spegne gli stack e toglie, una
 # voce alla volta, quello che il bootstrap ha messo sul server. Chiede cosa
 # eliminare e, prima di cominciare, conferma il riepilogo.
 #
@@ -8,9 +8,10 @@
 # Senza terminale, o per non rispondere alle domande, le voci si scelgono
 # con le opzioni e --yes salta la conferma:
 #
-#   --stacks     container, volumi (tutti i dati), immagini, reti e .env
+#   --stacks     container, reti, .env e certificato di Caddy
+#   --volumes    volumi degli stack, cioè tutti i dati
+#   --images     immagini Docker degli stack
 #   --downloads  cartella dei download di qBittorrent
-#   --docker     Docker Engine, con tutto quello che contiene
 #   --firewall   ufw e le sue regole
 #   --ssh        regole SSH di ron1n (tornano quelle di Debian)
 #   --tailscale  Tailscale, il server esce dalla tailnet
@@ -19,8 +20,9 @@
 #   --yes        nessuna conferma
 #
 # Niente backup: i dati cancellati si perdono. Il repo su GitHub non si
-# tocca. Restano sempre i pacchetti di base (curl, git, sudo, openssl,
-# lm-sensors), gli aggiornamenti automatici e il gruppo sudo dell'utente.
+# tocca. Restano sempre Docker Engine, i pacchetti di base (curl, git, sudo,
+# openssl, lm-sensors), gli aggiornamenti automatici e i gruppi sudo e
+# docker dell'utente.
 set -eu
 
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -29,7 +31,7 @@ export DEBIAN_FRONTEND=noninteractive
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 
-ITEMS="stacks downloads docker firewall ssh tailscale repo"
+ITEMS="stacks volumes images downloads firewall ssh tailscale repo"
 YES=0
 CHOSEN=
 for arg in "$@"; do
@@ -37,7 +39,7 @@ for arg in "$@"; do
     --yes) YES=1 ;;
     --all) CHOSEN=$ITEMS ;;
     -h | --help)
-      sed -n '2,24s/^# \{0,1\}//p' "$0"
+      sed -n '2,26s/^# \{0,1\}//p' "$0"
       exit 0
       ;;
     *)
@@ -84,9 +86,10 @@ chosen() {
 
 describe() {
   case $1 in
-    stacks) echo "stack: container, volumi con tutti i dati, immagini, reti e .env" ;;
+    stacks) echo "stack: container, reti, .env e certificato di Caddy" ;;
+    volumes) echo "volumi degli stack, con tutti i dati (database, configurazioni)" ;;
+    images) echo "immagini Docker degli stack" ;;
     downloads) echo "cartella dei download $DL" ;;
-    docker) echo "Docker Engine, con immagini e volumi rimasti" ;;
     firewall) echo "firewall ufw e le sue regole" ;;
     ssh) echo "regole SSH di ron1n (tornano quelle di Debian)" ;;
     tailscale) echo "Tailscale, il server esce dalla tailnet" ;;
@@ -107,17 +110,21 @@ ask() {
 }
 
 confirm() {
-  # Docker cancella anche i volumi, quindi gli stack vanno spenti prima.
-  if chosen docker && ! chosen stacks; then
-    CHOSEN="stacks $CHOSEN"
-    info "con Docker vanno via anche gli stack: li aggiungo"
-  fi
   [ -n "$CHOSEN" ] || die "nessuna voce scelta, non ho toccato niente"
   echo
   echo "Elimino:"
   for item in $ITEMS; do
     chosen "$item" && echo "  - $(describe "$item")"
   done
+  if chosen volumes || chosen images; then
+    chosen stacks || echo "Per togliere volumi e immagini spengo gli stack; i .env restano."
+  fi
+  # Postgres tiene le password nel suo volume, non nel .env.
+  if chosen stacks && ! chosen volumes; then
+    echo "Attenzione: i volumi restano, e Postgres conserva le password di adesso."
+    echo "Con .env nuovi ron1nOS non entra nel database: tieni da parte"
+    echo "infra/postgres/.env e infra/ron1nos/.env, o elimina anche i volumi."
+  fi
   if chosen tailscale && [ "$via_tailscale" = 1 ]; then
     echo "Sei collegato via Tailscale: la connessione cade alla fine."
   fi
@@ -127,38 +134,54 @@ confirm() {
   [ "$answer" = cancella ] || die "annullato, non ho toccato niente"
 }
 
-clean_stacks() {
-  if ! command -v docker >/dev/null || ! docker info >/dev/null 2>&1; then
-    step "Stack"
-    info "Docker non c'è o non risponde, salto"
-    rm -f "$INFRA"/*/.env
-    return 0
-  fi
-  stacks=$(all_stacks)
+docker_ok() {
+  command -v docker >/dev/null && docker info >/dev/null 2>&1
+}
 
-  # Le immagini si leggono dai container prima di spegnerli.
-  images=
+# Spegne gli stack e toglie i container, ricordando in IMAGES le immagini
+# usate: dai container, che dopo non ci sono più, e dai compose.
+stop_stacks() {
+  stacks=$(all_stacks)
+  IMAGES=
   for s in $stacks; do
-    images="$images $(containers "$s" '{{.Image}}' | tr '\n' ' ')"
+    IMAGES="$IMAGES $(containers "$s" '{{.Image}}' | tr '\n' ' ')"
+    IMAGES="$IMAGES $(compose "$s" config --images 2>/dev/null | tr '\n' ' ')"
   done
 
   # Spegnimento ordinato, come ./infra.sh down: prima Caddy, Postgres per
   # ultimo.
   cmd_down
 
-  step "Dati degli stack"
+  # Container rimasti, per esempio di uno stack senza .env.
   for s in $stacks; do
-    p=$(project_name "$s")
-    # Container rimasti, per esempio di uno stack senza .env.
     ids=$(containers "$s")
     # shellcheck disable=SC2086 # un id per parola
     [ -z "$ids" ] || docker rm -f $ids >/dev/null
+  done
+}
+
+clean_volumes() {
+  step "Volumi"
+  for s in $(all_stacks); do
+    p=$(project_name "$s")
     vols=$(docker volume ls -q --filter "label=com.docker.compose.project=$p")
-    if [ -n "$vols" ]; then
-      # shellcheck disable=SC2086 # un volume per parola
-      docker volume rm $vols >/dev/null
-      info "$s: volumi $(echo "$vols" | tr '\n' ' ')"
-    fi
+    [ -n "$vols" ] || continue
+    # shellcheck disable=SC2086 # un volume per parola
+    docker volume rm $vols >/dev/null
+    info "$s: $(echo "$vols" | tr '\n' ' ')"
+  done
+}
+
+clean_images() {
+  step "Immagini"
+  for img in $(echo "$IMAGES" | tr ' ' '\n' | sort -u); do
+    if docker image rm "$img" >/dev/null 2>&1; then info "$img"; fi
+  done
+}
+
+clean_stacks() {
+  step "Stack"
+  for s in $(all_stacks); do
     if [ -f "$INFRA/$s/.env" ]; then
       rm -f "$INFRA/$s/.env"
       info "$s: .env cancellato"
@@ -172,10 +195,7 @@ clean_stacks() {
     info "updates: compose.override.yaml cancellato"
   fi
 
-  for img in $(echo "$images" | tr ' ' '\n' | sort -u); do
-    if docker image rm "$img" >/dev/null 2>&1; then info "immagine $img"; fi
-  done
-
+  docker_ok || return 0
   for net in $NETWORKS; do
     docker network inspect "$net" >/dev/null 2>&1 || continue
     docker network rm "$net" >/dev/null
@@ -210,19 +230,6 @@ apt_purge() {
   # shellcheck disable=SC2086 # un pacchetto per parola
   apt-get purge -y -q $pkgs </dev/null >/dev/null
   info "disinstallati:$pkgs"
-}
-
-remove_docker() {
-  step "Docker"
-  systemctl disable --now docker.service docker.socket containerd.service >/dev/null 2>&1 || true
-  apt_purge docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-ce-rootless-extras
-  rm -rf /var/lib/docker /var/lib/containerd /etc/docker ||
-    info "qualcosa in /var/lib/docker è ancora in uso: si cancella dopo un riavvio"
-  rm -f /etc/apt/sources.list.d/docker.sources /etc/apt/keyrings/docker.asc
-  if getent group docker >/dev/null; then
-    groupdel docker
-    info "gruppo docker cancellato"
-  fi
 }
 
 remove_firewall() {
@@ -287,17 +294,25 @@ if [ -z "$CHOSEN" ]; then
 fi
 confirm
 
+if chosen stacks || chosen volumes || chosen images; then
+  if docker_ok; then
+    stop_stacks
+    if chosen volumes; then clean_volumes; fi
+    if chosen images; then clean_images; fi
+  else
+    info "Docker non c'è o non risponde: salto container, volumi e immagini"
+  fi
+fi
 if chosen stacks; then
   clean_stacks
   clean_cert
 fi
 if chosen downloads; then clean_downloads; fi
-if chosen docker; then remove_docker; fi
 if chosen firewall; then remove_firewall; fi
 if chosen ssh; then remove_ssh; fi
 if chosen repo; then remove_repo; fi
 step "Fatto"
-if chosen repo || chosen docker; then
+if chosen repo; then
   info "Per rifare tutto: bootstrap.sh (docs/server-setup.md)."
 else
   info "Per ripartire: ./infra.sh up, oppure bootstrap.sh per il sistema."

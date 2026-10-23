@@ -4,8 +4,10 @@
 #
 #   curl -fsSL https://raw.githubusercontent.com/1r0n51uv/ron1n/main/scripts/bootstrap.sh | sh
 #
-# Da root (`su -`). Si può rilanciare: rifà solo ciò che manca, non tocca
-# i .env esistenti né i dati degli stack. Niente backup, per scelta.
+# Da root (`su -`). Prima del primo avvio chiede i valori dei .env degli
+# stack (invio = default, password casuali). Si può rilanciare: rifà solo
+# ciò che manca, non tocca i .env esistenti né i dati degli stack. Niente
+# backup, per scelta.
 #
 # Variabili d'ambiente facoltative:
 #   RON1N_USER      utente amministratore (default: il primo con UID >= 1000)
@@ -19,7 +21,6 @@ set -eu
 RON1N_REPO=${RON1N_REPO:-https://github.com/1r0n51uv/ron1n}
 RON1N_BRANCH=${RON1N_BRANCH:-main}
 RON1N_DIR=${RON1N_DIR:-/opt/ron1n}
-DOWNLOADS_DIR=/srv/downloads
 
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 export PATH
@@ -44,9 +45,15 @@ compose() (
   docker compose "$@"
 )
 
-# Valore di KEY in un file .env (ultima occorrenza, senza commenti).
+# Valore di KEY in un file .env (ultima occorrenza, senza commenti e
+# senza apici singoli).
 env_get() {
-  sed -n "s/^$2=//p" "$1" | tail -n 1
+  sed -n "s/^$2=//p" "$1" | tail -n 1 | sed "s/^'\(.*\)'\$/\1/"
+}
+
+# Password casuale, solo esadecimale: sicura anche dentro un URL.
+rand() {
+  od -An -N24 -tx1 /dev/urandom | tr -d ' \n'
 }
 
 check_system() {
@@ -224,9 +231,222 @@ clone_repo() {
     git clone -q --branch "$RON1N_BRANCH" "$RON1N_REPO" "$RON1N_DIR"
     info "clonato a $(git -C "$RON1N_DIR" rev-parse --short HEAD)"
   fi
-  mkdir -p "$DOWNLOADS_DIR"
-  chown "$ADMIN_UID:$ADMIN_GID" "$DOWNLOADS_DIR"
-  info "$DOWNLOADS_DIR di $ADMIN"
+}
+
+# Con curl | sh lo stdin è lo script: le risposte si leggono da /dev/tty.
+have_tty() { (: </dev/tty) 2>/dev/null; }
+
+# Domanda $1 con risposta in REPLY; invio = $2.
+ask() {
+  if [ -n "$2" ]; then
+    printf '    %s [%s]: ' "$1" "$2" >/dev/tty
+  else
+    printf '    %s: ' "$1" >/dev/tty
+  fi
+  IFS= read -r REPLY </dev/tty || REPLY=
+  [ -n "$REPLY" ] || REPLY=$2
+}
+
+# Come ask, senza eco e senza default.
+ask_secret() {
+  printf '    %s: ' "$1" >/dev/tty
+  stty -echo </dev/tty
+  IFS= read -r REPLY </dev/tty || REPLY=
+  stty echo </dev/tty
+  printf '\n' >/dev/tty
+}
+
+# Password nuova in REPLY, scritta due volte. $2 dice cosa fa l'invio:
+# casuale (una password generata), vuota, o niente (va scritta). $3 è la
+# lunghezza minima; con $4 = url solo caratteri che stanno in un URL.
+ask_password() {
+  while :; do
+    ask_secret "$1"
+    if [ -z "$REPLY" ]; then
+      case $2 in
+        casuale) REPLY=$(rand) && return 0 ;;
+        vuota) return 0 ;;
+      esac
+      info "serve una password"
+      continue
+    fi
+    pw=$REPLY
+    if [ "${#pw}" -lt "$3" ]; then
+      info "almeno $3 caratteri, riprova"
+      continue
+    fi
+    case $pw in
+      *"'"*)
+        info "niente apici singoli, riprova"
+        continue
+        ;;
+    esac
+    if [ "${4:-}" = url ]; then
+      case $pw in
+        *[!A-Za-z0-9._~-]*)
+          info "solo lettere, cifre e . _ ~ - (finisce in DATABASE_URL), riprova"
+          continue
+          ;;
+      esac
+    fi
+    ask_secret "Ripeti"
+    [ "$REPLY" = "$pw" ] && return 0
+    info "non coincidono, riprova"
+  done
+}
+
+# Valore pronto per il .env: tra apici singoli se contiene caratteri che
+# Compose interpreterebbe ($, spazi, #...).
+env_quote() {
+  case $1 in
+    *[!A-Za-z0-9_./:@+=,-]*) printf "'%s'" "$1" ;;
+    *) printf '%s' "$1" ;;
+  esac
+}
+
+# Mette KEY=VALORE ($2=$3) nel file $1, al posto della riga KEY= o di
+# quella commentata "# KEY=".
+env_set() {
+  K=$2 V=$3 awk '
+    !done && ($0 ~ "^" ENVIRON["K"] "=" || $0 ~ "^# *" ENVIRON["K"] "=") {
+      print ENVIRON["K"] "=" ENVIRON["V"]; done = 1; next
+    }
+    { print }' "$1" >"$1.new"
+  mv "$1.new" "$1"
+}
+
+# I commenti subito sopra KEY ($2) nel file $1: la spiegazione della voce.
+env_help() {
+  awk -v k="$2" '
+    $0 ~ "^" k "=" { printf "%s", buf; exit }
+    /^#/ { sub(/^# ?/, ""); buf = buf "      " $0 "\n"; next }
+    { buf = "" }' "$1"
+}
+
+# Hash per AUTH_PASSWORD_HASH nel formato di ron1nOS
+# (server/auth/password.ts): scrypt$N$r$p$sale$hash, sale e hash in base64.
+# La password passa per un argomento di openssl solo per un istante, su un
+# server dove c'è solo root.
+scrypt_hash() {
+  salt=$(openssl rand -base64 16)
+  hex=$(printf '%s' "$salt" | base64 -d | od -An -tx1 | tr -d ' \n')
+  hash=$(openssl kdf -keylen 32 -kdfopt "pass:$1" -kdfopt "hexsalt:$hex" \
+    -kdfopt n:32768 -kdfopt r:8 -kdfopt p:1 -kdfopt maxmem_bytes:67108864 \
+    -binary SCRYPT | base64)
+  # shellcheck disable=SC2016 # i $ sono del formato, non variabili
+  printf 'scrypt$32768$8$1$%s$%s' "$salt" "$hash"
+}
+
+# Le voci di ron1nOS commentate in .env.example: login, Documenti, YAZIO.
+ask_ron1nos() {
+  f=$1
+  ask_password "Password della dashboard, almeno 12 caratteri (invio = login spento)" vuota 12
+  if [ -n "$REPLY" ]; then
+    env_set "$f" AUTH_PASSWORD_HASH "$(env_quote "$(scrypt_hash "$REPLY")")"
+    ask "Modulo Documenti, con una chiave di cifratura generata? (s/n)" s
+    case $REPLY in
+      s | S | si | sì)
+        env_set "$f" DOCUMENTS_KEY "$(openssl rand -base64 32)"
+        DOCUMENTS_KEY_NEW=1
+        ;;
+    esac
+  fi
+  ask "Email dell'account YAZIO (invio = sincronizzazione spenta)" ""
+  [ -n "$REPLY" ] || return 0
+  env_set "$f" YAZIO_USERNAME "$(env_quote "$REPLY")"
+  ask_password "Password di YAZIO" "" 1
+  env_set "$f" YAZIO_PASSWORD "$(env_quote "$REPLY")"
+  for key in YAZIO_CLIENT_ID YAZIO_CLIENT_SECRET; do
+    env_set "$f" "$key" "$(sed -n "s/^# *$key=//p" "$f")"
+  done
+  env_set "$f" YAZIO_TOKEN_KEY "$(openssl rand -base64 32)"
+}
+
+# Il .env di uno stack: ogni voce di .env.example, col suo valore come
+# default. Utente, gruppo e i valori condivisi con altri stack non si
+# chiedono: si riprendono, così sono coerenti.
+ask_stack_env() {
+  dir=$INFRA_DIR/$1
+  tmp=$dir/.env.tmp
+  echo
+  info "$1"
+  cp "$dir/.env.example" "$tmp"
+  # Le chiavi prima del ciclo, che riscrive il file. Una per parola.
+  # shellcheck disable=SC2013
+  for key in $(sed -n 's/^\([A-Z_][A-Z0-9_]*\)=.*/\1/p' "$tmp"); do
+    case $1:$key in
+      *:PUID) val=$ADMIN_UID ;;
+      *:PGID) val=$ADMIN_GID ;;
+      *:TZ)
+        [ -n "${STACK_TZ:-}" ] || {
+          ask "Fuso orario" "$(env_get "$tmp" TZ)"
+          STACK_TZ=$REPLY
+        }
+        val=$STACK_TZ
+        ;;
+      ron1nos:QBT_URL) continue ;;
+      ron1nos:QBT_USERNAME | ron1nos:QBT_PASSWORD)
+        val=$(env_get "$INFRA_DIR/torrent/.env" "$key")
+        ;;
+      ron1nos:DATABASE_URL)
+        val="postgres://ron1nos:$(env_get "$INFRA_DIR/postgres/.env" RON1NOS_DB_PASSWORD)@postgres:5432/ron1nos"
+        ;;
+      *PASSWORD*)
+        env_help "$tmp" "$key" >/dev/tty
+        url=
+        [ "$1" != postgres ] || url=url
+        ask_password "$key (invio = casuale)" casuale 1 "$url"
+        val=$REPLY
+        ;;
+      *)
+        env_help "$tmp" "$key" >/dev/tty
+        ask "$key" "$(env_get "$tmp" "$key")"
+        val=$REPLY
+        ;;
+    esac
+    env_set "$tmp" "$key" "$(env_quote "$val")"
+  done
+  if [ "$1" = ron1nos ]; then ask_ron1nos "$tmp"; fi
+  chmod 600 "$tmp"
+  chown "$ADMIN_UID:$ADMIN_GID" "$tmp"
+  mv "$tmp" "$dir/.env"
+  info "$dir/.env scritto"
+}
+
+# I .env mancanti, chiesti sul terminale prima del primo avvio. Quelli che
+# ci sono già non si toccano; senza terminale li crea infra.sh con password
+# casuali.
+ask_envs() {
+  step "Configurazione degli stack"
+  INFRA_DIR=$RON1N_DIR/infra
+  missing=
+  for dir in "$INFRA_DIR"/*/; do
+    s=$(basename "$dir")
+    case $s in _*) continue ;; esac
+    if [ -f "$dir/compose.yaml" ] && [ -f "$dir/.env.example" ] && [ ! -f "$dir/.env" ]; then
+      missing="$missing $s"
+    fi
+  done
+  if [ -z "$missing" ]; then
+    info "i .env ci sono già, non li tocco"
+    return 0
+  fi
+  if ! have_tty; then
+    info "nessun terminale: i .env li crea infra.sh con password casuali"
+    return 0
+  fi
+  info "Invio accetta il valore tra parentesi; le password non si vedono mentre scrivi."
+  trap 'stty echo </dev/tty 2>/dev/null; exit 130' INT TERM
+  # Postgres e torrent prima di ron1nos, che ne riprende le password.
+  ordered=
+  for s in postgres torrent; do
+    case " $missing " in *" $s "*) ordered="$ordered $s" ;; esac
+  done
+  for s in $missing; do
+    case $s in postgres | torrent) ;; *) ordered="$ordered $s" ;; esac
+  done
+  for s in $ordered; do ask_stack_env "$s"; done
+  trap - INT TERM
 }
 
 # Reti, .env con password casuali coerenti fra stack e avvio di tutto:
@@ -272,11 +492,28 @@ summary() {
     echo "  Il certificato radice di Caddy non è ancora pronto: rilancia lo script tra poco."
   fi
   echo
-  echo "  Credenziali (sono nei .env in $RON1N_DIR/infra, leggibili solo da root):"
+  echo "  Indirizzi, dalla tailnet:"
+  for h in $hosts; do echo "    https://$h"; done
+  echo
+  echo "  Configurazione, nei .env degli stack (leggibili solo da $ADMIN e root):"
+  for f in "$RON1N_DIR"/infra/*/.env; do
+    [ -f "$f" ] && echo "    $f"
+  done
+  echo "  Dopo una modifica: cd $RON1N_DIR && sudo ./infra.sh up"
+  echo
+  echo "  Credenziali:"
   echo "    qBittorrent  $(env_get "$RON1N_DIR/infra/torrent/.env" QBT_USERNAME) / $(env_get "$RON1N_DIR/infra/torrent/.env" QBT_PASSWORD)"
   echo "    Webtop       $(env_get "$RON1N_DIR/infra/webtop/.env" CUSTOM_USER) / $(env_get "$RON1N_DIR/infra/webtop/.env" PASSWORD)"
-  echo
-  echo "  Apri https://ron1n.home dalla tailnet. Per YAZIO vedi infra/ron1nos/README.md."
+  if grep -q '^AUTH_PASSWORD_HASH=' "$RON1N_DIR/infra/ron1nos/.env" 2>/dev/null; then
+    echo "    ron1nOS      la password scelta"
+  else
+    echo "    ron1nOS      login spento: aperta a chi è nella tailnet"
+  fi
+  if [ "${DOCUMENTS_KEY_NEW:-0}" = 1 ]; then
+    echo
+    echo "  Salva DOCUMENTS_KEY (in infra/ron1nos/.env) in un password manager:"
+    echo "  senza, i documenti di ron1nOS non si leggono più."
+  fi
   echo "  Stato dei container: docker ps (dopo un nuovo login di $ADMIN, o con sudo)."
 }
 
@@ -289,6 +526,7 @@ main() {
   install_tailscale
   setup_ssh
   clone_repo
+  ask_envs
   setup_firewall
   start_stacks
   summary

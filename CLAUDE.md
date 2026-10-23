@@ -14,7 +14,10 @@ Contesto per le sessioni di Claude che lavorano su questo repo.
   le sue password generate in `make_envs`.
 - Primo setup del server: `scripts/bootstrap.sh`; il suo opposto è
   `scripts/cleanup.sh` (spec `docs/specs/server-setup.md`). Se il bootstrap
-  installa qualcosa di nuovo, il cleanup deve saperlo togliere.
+  installa qualcosa di nuovo, il cleanup deve saperlo togliere; Docker
+  Engine fa eccezione e resta. Una variabile nuova in un `.env.example` la
+  chiede il bootstrap: se va derivata da un altro stack o è commentata,
+  aggiorna `ask_stack_env` o `ask_ron1nos`.
 - Segreti solo in file `.env` non versionati; versiona un `.env.example`.
 - Immagini sempre con tag esplicito; niente `latest` per i servizi con dati.
 - Accesso privato via Tailscale, pubblico solo via Cloudflare Tunnel.

@@ -30,3 +30,13 @@ repo in [`templates/app/`](templates/app/).
 
 Mini PC Ryzen 5 5300U, 16 GB RAM, Debian + Docker Compose. Configurazione
 in [`infra/`](infra/), primo setup in [`docs/server-setup.md`](docs/server-setup.md).
+
+Setup completo su Debian 13 appena installato: da root (`su -`) scarica ed
+esegue [`scripts/bootstrap.sh`](scripts/bootstrap.sh), che chiede i valori
+dei `.env` e alla fine stampa indirizzi e posizione dei `.env`.
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/1r0n51uv/ron1n/main/scripts/bootstrap.sh | sh
+```
+
+Per tornare indietro: `sudo /opt/ron1n/scripts/cleanup.sh`.

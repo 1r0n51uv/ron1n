@@ -2,16 +2,18 @@
 
 Dopo i passi 1-3, da root sul server (`su -`), il resto lo fa
 [`scripts/bootstrap.sh`](../scripts/bootstrap.sh): pacchetti, Docker,
-Tailscale, SSH, firewall, repo in `/opt/ron1n` e avvio degli stack con
-`./infra.sh up` (spec [SETUP](specs/server-setup.md)).
+Tailscale, SSH, firewall, repo in `/opt/ron1n`, i `.env` degli stack
+chiesti sul terminale (invio = default, password casuali) e avvio con
+`./infra.sh up` (spec [SETUP](specs/server-setup.md)). Alla fine stampa gli
+indirizzi dei servizi e dove stanno i `.env`.
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/1r0n51uv/ron1n/main/scripts/bootstrap.sh | sh
 ```
 
 Per tornare indietro, `sudo /opt/ron1n/scripts/cleanup.sh` chiede cosa
-eliminare (stack e dati, download, Docker, firewall, SSH, Tailscale, repo)
-e lo toglie.
+eliminare (stack, volumi, immagini, download, firewall, SSH, Tailscale,
+repo) e lo toglie. Docker Engine resta.
 
 I passi sotto sono la stessa cosa fatta a mano.
 
