@@ -385,6 +385,14 @@ ask_stack_env() {
         val=$STACK_TZ
         ;;
       ron1nos:QBT_URL) continue ;;
+      dns:TS_IP)
+        val=$(tailscale ip -4 2>/dev/null | head -n 1) || val=
+        [ -n "$val" ] || {
+          env_help "$tmp" "$key" >/dev/tty
+          ask "$key" "$(env_get "$tmp" "$key")"
+          val=$REPLY
+        }
+        ;;
       ron1nos:QBT_USERNAME | ron1nos:QBT_PASSWORD)
         val=$(env_get "$INFRA_DIR/torrent/.env" "$key")
         ;;
@@ -481,13 +489,14 @@ summary() {
   echo
   echo "  Server nella tailnet: $ts_ip"
   echo
-  printf '%s\n' '  Sui client aggiungi a /etc/hosts (Windows: C:\Windows\System32\drivers\etc\hosts):'
-  echo "    $ts_ip $hosts"
+  echo "  Nomi *.ron1n.home per tutti i client, telefono compreso (una volta sola):"
+  echo "    console Tailscale, DNS > Add nameserver > Custom: $ts_ip"
+  echo "    con \"Restrict to domain\" (split DNS) su ron1n.home"
   echo
   if [ -f "$ca" ]; then
-    echo "  Certificato radice di Caddy: $ca"
-    echo "  Copialo sui client (scp $ADMIN@$ts_ip:ron1n-caddy-root.crt .) e installalo come"
-    echo "  autorità attendibile, così i siti *.ron1n.home non danno errori di certificato."
+    echo "  Certificato radice di Caddy, da installare come autorità attendibile sui"
+    echo "  client: http://ca.ron1n.home dal client, oppure $ca"
+    echo "  (scp $ADMIN@$ts_ip:ron1n-caddy-root.crt .). Passi in docs/server-setup.md."
   else
     echo "  Il certificato radice di Caddy non è ancora pronto: rilancia lo script tra poco."
   fi

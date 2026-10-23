@@ -1,0 +1,20 @@
+# DNS interno per i client della tailnet: risponde *.ron1n.home con l'IP
+# Tailscale del server, così telefono e computer raggiungono i siti di
+# Caddy senza toccare il file hosts. Va attivato nella console Tailscale
+# come split DNS (README). Spec SETUP-005.
+name: dns
+
+services:
+  coredns:
+    image: coredns/coredns:1.14.7
+    restart: unless-stopped
+    command: ["-conf", "/etc/coredns/Corefile"]
+    environment:
+      TS_IP: ${TS_IP:?manca TS_IP in infra/dns/.env}
+    # Dalla LAN la porta 53 è chiusa dal firewall (DOCKER-USER): risponde
+    # solo alla tailnet, come Caddy.
+    ports:
+      - "53:53/udp"
+      - "53:53/tcp"
+    volumes:
+      - ./Corefile:/etc/coredns/Corefile:ro
