@@ -54,10 +54,13 @@ Tailscale DNS" (il default; su Linux `tailscale up --accept-dns`).
 
 **Certificato, su ogni dispositivo:** Caddy firma i siti con una sua CA,
 che va installata come attendibile. Da un dispositivo nella tailnet apri
-`http://ca.ron1n.home` (in HTTP: l'HTTPS diventa valido dopo).
+`http://ca.ron1n.home` (in HTTP: l'HTTPS diventa valido dopo). Se il
+browser passa da solo a https, accetta l'avviso sul certificato: la pagina
+c'è anche lì.
 
-- **iPhone/iPad:** apri il link in Safari e consenti il download del
-  profilo. Impostazioni → Profilo scaricato → Installa. Poi Impostazioni →
+- **iPhone/iPad:** apri il link in Safari (all'avviso "connessione non
+  privata": Mostra dettagli → Visita questo sito web) e consenti il
+  download del profilo. Impostazioni → Profilo scaricato → Installa. Poi Impostazioni →
   Generali → Info → Impostazioni certificati attendibili e attiva la
   fiducia completa per "Caddy Local Authority".
 - **macOS:** apri il file scaricato, finisce in Accesso Portachiavi; doppio
