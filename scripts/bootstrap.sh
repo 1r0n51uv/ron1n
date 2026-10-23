@@ -414,14 +414,6 @@ ask_stack_env() {
         val=$STACK_TZ
         ;;
       ron1nos:QBT_URL) continue ;;
-      dns:TS_IP)
-        val=$(tailscale ip -4 2>/dev/null | head -n 1) || val=
-        [ -n "$val" ] || {
-          env_help "$tmp" "$key" >/dev/tty
-          ask "$key" "$(env_get "$tmp" "$key")"
-          val=$REPLY
-        }
-        ;;
       ron1nos:QBT_USERNAME | ron1nos:QBT_PASSWORD)
         val=$(env_get "$INFRA_DIR/torrent/.env" "$key")
         ;;

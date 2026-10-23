@@ -105,3 +105,16 @@ gratuito accetta richieste fino a 100 MB.
 **SSH:** il bootstrap attiva Tailscale SSH, quindi da qualsiasi client
 SSH (anche Termius o Blink su iPhone) basta `ssh <utente>@ron1n`, senza
 chiavi né password: autentica Tailscale.
+Tailscale serve solo a questo: siti, API e app passano da Cloudflare.
+
+**Da un server con lo stack `dns`** (SETUP-005, tolto con SETUP-009):
+prima di aggiornare il repo spegnilo, poi togli la cartella rimasta con il
+suo `.env` e, nella [console Tailscale](https://login.tailscale.com/admin/dns),
+il nameserver custom per `ron1n.home` (**DNS → Nameservers**).
+
+```sh
+cd /opt/ron1n
+sudo ./infra.sh down dns
+sudo git pull --ff-only
+sudo rm -rf infra/dns
+```

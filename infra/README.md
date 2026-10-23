@@ -7,7 +7,6 @@ Uno stack Docker Compose per cartella. Sul server il repo è clonato in
 | ------------ | --------------------------------------------------------------------------------------------------- |
 | `proxy`      | Caddy, reverse proxy per tutti i servizi web ([README](proxy/README.md))                            |
 | `tunnel`     | Cloudflare Tunnel: i siti su `*.ron1n.space`, dietro Cloudflare Access ([README](tunnel/README.md)) |
-| `dns`        | CoreDNS, i vecchi nomi `*.ron1n.home` per la tailnet, fino a SETUP-009 ([README](dns/README.md))    |
 | `monitoring` | Uptime Kuma                                                                                         |
 | `updates`    | Watchtower, aggiorna solo i container con l'etichetta di opt-in                                     |
 | `torrent`    | qBittorrent, client torrent usato dal modulo Download di ron1nOS ([README](torrent/README.md))      |

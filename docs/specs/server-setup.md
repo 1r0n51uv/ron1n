@@ -107,7 +107,7 @@ Accettazione:
 
 ### SETUP-005 · Nomi `*.ron1n.home` su tutti i client
 
-Stato: fatto (#30)
+Stato: superato da SETUP-009
 
 Telefono, tablet e computer della tailnet aprono i siti `*.ron1n.home`
 senza toccare il file hosts, che su iOS non si può modificare.
@@ -221,20 +221,26 @@ Accettazione:
       (SETUP-006); riferimenti, README e la pagina `ios` usano i nomi
       nuovi.
 
-### SETUP-009 · Via Tailscale
+### SETUP-009 · Tailscale solo per l'SSH
 
-Stato: da fare
+Stato: in corso
 
-Dopo SETUP-008, provato dal telefono fuori casa, Tailscale non serve più.
+Dopo SETUP-008 siti, API e app passano da Cloudflare Tunnel con Access, e
+lo split DNS di `*.ron1n.home` non serve più. Tailscale resta, ma solo per
+l'SSH: la porta 22 attraverso Cloudflare, da qualsiasi client, c'è solo
+con Spectrum, che è a pagamento, e aprire la 22 sul router esporrebbe il
+server (scelta del proprietario, 23/10).
 
 Accettazione:
 
-- [ ] Il bootstrap non installa più Tailscale e non apre la sua
-      interfaccia nel firewall; il cleanup sa ancora toglierlo da un server
-      che lo ha.
-- [ ] Lo stack `dns` (SETUP-005) sparisce, con `TS_IP` e lo split DNS:
-      i nomi li risolve il DNS pubblico di Cloudflare.
-- [ ] SSH resta solo dalla LAN, con chiave. Da fuori casa niente SSH
-      finché non serve (eventualmente con Cloudflare Access per SSH).
-- [ ] `CLAUDE.md`, README e `docs/server-setup.md` dicono che l'accesso
-      privato passa da Cloudflare Tunnel con Access.
+- [x] Lo stack `dns` (SETUP-005) sparisce, con `TS_IP` in `infra.sh`, nel
+      bootstrap e nei test: i nomi li risolve il DNS pubblico di
+      Cloudflare.
+- [x] Il bootstrap installa ancora Tailscale con Tailscale SSH e lascia
+      aperta la sua interfaccia nel firewall; il cleanup lo toglie come
+      prima.
+- [x] `docs/server-setup.md` spiega come spegnere lo stack `dns` su un
+      server che lo ha e come togliere lo split DNS dalla console
+      Tailscale.
+- [x] `CLAUDE.md` dice che siti e API passano solo da Cloudflare Tunnel
+      con Access, e che Tailscale resta solo per l'SSH.
