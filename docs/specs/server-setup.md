@@ -223,7 +223,7 @@ Accettazione:
 
 ### SETUP-009 · Tailscale solo per l'SSH
 
-Stato: in corso
+Stato: fatto (#52)
 
 Dopo SETUP-008 siti, API e app passano da Cloudflare Tunnel con Access, e
 lo split DNS di `*.ron1n.home` non serve più. Tailscale resta, ma solo per
@@ -244,3 +244,37 @@ Accettazione:
       Tailscale.
 - [x] `CLAUDE.md` dice che siti e API passano solo da Cloudflare Tunnel
       con Access, e che Tailscale resta solo per l'SSH.
+
+### SETUP-010 · Cloudflare da script
+
+Stato: fatto (#53)
+
+Tunnel, DNS e Access di SETUP-008 si preparano con un comando, non a mano
+nella dashboard: la prima volta li ha creati la CLI `cf`, e lo script
+rifà gli stessi passi con l'API di Cloudflare, per un account nuovo o per
+rimettere a posto quello di oggi.
+
+Accettazione:
+
+- [x] `scripts/cloudflare.sh` crea o aggiorna, cercandoli per nome: il
+      tunnel `ron1n` gestito da Cloudflare con `*.DOMINIO` →
+      `http://caddy:80` e 404 per il resto, il CNAME `*` verso il tunnel
+      con proxy, la policy email "ron1n · <nome>", il service token
+      `ron1nos-ios` (un anno) con la sua policy Service Auth e
+      l'applicazione Access `ron1n` su `*.DOMINIO` con sessione di un
+      mese. Rilanciato non crea doppioni.
+- [x] Il dominio viene da `infra/proxy/.env`. Credenziali ed email in
+      `~/.cf-home/.env` (600): `CLOUDFLARE_API_TOKEN`,
+      `CLOUDFLARE_ACCOUNT_ID`, `ACCESS_EMAIL`. Il token ha solo i permessi
+      che servono: Cloudflare Tunnel, Access: Apps and Policies, Access:
+      Service Tokens in modifica sull'account, DNS in modifica sulla zona.
+- [x] Scrive token del tunnel e credenziali del service token in
+      `~/.cf-home` con permessi 600 e non li stampa mai. Il secret si
+      legge solo alla creazione: `--ruota` ne fa uno nuovo e il vecchio
+      smette di valere.
+- [x] `--dry-run` legge e dice cosa farebbe, senza scrivere niente. Se
+      Cloudflare risponde con un errore, esce e ne mostra il messaggio.
+- [x] Test con un curl finto in `scripts/test-cloudflare-sh.sh`, dentro
+      `npm run check`. `jq` diventa un pacchetto di base del bootstrap,
+      che il cleanup lascia come curl e git.
+- [x] Tutto sul piano gratuito di Cloudflare.

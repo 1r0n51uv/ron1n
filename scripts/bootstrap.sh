@@ -87,7 +87,7 @@ find_user() {
 install_base() {
   step "Pacchetti base"
   apt-get update -q </dev/null
-  apt_install ca-certificates curl git sudo openssl ufw lm-sensors unattended-upgrades
+  apt_install ca-certificates curl git jq sudo openssl ufw lm-sensors unattended-upgrades
   cat >/etc/apt/apt.conf.d/20auto-upgrades <<'EOF'
 APT::Periodic::Update-Package-Lists "1";
 APT::Periodic::Unattended-Upgrade "1";

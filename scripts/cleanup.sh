@@ -21,8 +21,8 @@
 #   --yes        nessuna conferma
 #
 # Niente backup: i dati cancellati si perdono. Il repo su GitHub non si
-# tocca. Restano sempre Docker Engine, i pacchetti di base (curl, git, sudo,
-# openssl, lm-sensors), gli aggiornamenti automatici e i gruppi sudo e
+# tocca. Restano sempre Docker Engine, i pacchetti di base (curl, git, jq,
+# sudo, openssl, lm-sensors), gli aggiornamenti automatici e i gruppi sudo e
 # docker dell'utente.
 set -eu
 
