@@ -32,6 +32,7 @@ printf 'name: aaa-nuovo\nservices: {}\n' >"$repo/infra/aaa-nuovo/compose.yaml"
 echo 'SEGRETO=cambiami' >"$repo/infra/aaa-nuovo/.env.example"
 printf 'name: zzz-libero\nservices: {}\n' >"$repo/infra/zzz-libero/compose.yaml"
 sed -i "s|^DOWNLOADS_DIR=.*|DOWNLOADS_DIR=$tmp/downloads|" "$repo/infra/torrent/.env.example"
+sed -i "s|^IOS_DIR=.*|IOS_DIR=$tmp/ios|" "$repo/infra/ios/.env.example"
 
 # docker finto: scrive in $LOG "<cartella> <argomenti>". Le reti esistono
 # solo dopo network create; ps elenca un container per gli stack in $UP.
@@ -85,7 +86,7 @@ check "status: stack spenti" grep -q "postgres     spento" "$tmp/out"
 run up
 check "up: termina senza errori" true
 check "up: reti proxy e db create" sh -c "grep -q 'network create proxy' '$LOG' && grep -q 'network create db' '$LOG'"
-check "up: ordine di avvio" test "$(order up)" = "postgres torrent glances ron1nos monitoring updates proxy dns zzz-libero "
+check "up: ordine di avvio" test "$(order up)" = "postgres torrent glances ron1nos monitoring updates proxy dns ios zzz-libero "
 check "up: aspetta Postgres sano" grep -q "^postgres compose up .*--wait" "$LOG"
 check "up: niente template" sh -c "! grep -q '^_app-template' '$LOG'"
 check "up: stack senza regole né .env non avviato" grep -q "aaa-nuovo: manca .env" "$tmp/out"
@@ -101,6 +102,8 @@ check "up: stesso utente qBittorrent" test "$(envval ron1nos QBT_USERNAME)" = "$
 check "up: DNS con l'IP Tailscale" test "$(envval dns TS_IP)" = 100.64.0.7
 check "up: PUID dell'utente" test "$(envval torrent PUID)" = "$owner"
 check "up: cartella dei download creata" test -d "$tmp/downloads"
+check "up: cartella delle build iOS creata" test -d "$tmp/ios/builds"
+check "up: PUID del builder iOS" test "$(envval ios PUID)" = "$owner"
 check "up: dice dove sono le password" grep -q "Password generate" "$tmp/out"
 
 # Rilancio: i .env restano com'erano.

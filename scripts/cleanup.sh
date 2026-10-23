@@ -12,6 +12,7 @@
 #   --volumes    volumi degli stack, cioè tutti i dati
 #   --images     immagini Docker degli stack
 #   --downloads  cartella dei download di qBittorrent
+#   --ios        cartella del builder iOS: Xcode.xip, SDK, sorgenti e IPA
 #   --firewall   ufw e le sue regole
 #   --ssh        regole SSH di ron1n (tornano quelle di Debian)
 #   --tailscale  Tailscale, il server esce dalla tailnet
@@ -31,7 +32,7 @@ export DEBIAN_FRONTEND=noninteractive
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 
-ITEMS="stacks volumes images downloads firewall ssh tailscale repo"
+ITEMS="stacks volumes images downloads ios firewall ssh tailscale repo"
 YES=0
 CHOSEN=
 for arg in "$@"; do
@@ -39,7 +40,7 @@ for arg in "$@"; do
     --yes) YES=1 ;;
     --all) CHOSEN=$ITEMS ;;
     -h | --help)
-      sed -n '2,26s/^# \{0,1\}//p' "$0"
+      sed -n '2,27s/^# \{0,1\}//p' "$0"
       exit 0
       ;;
     *)
@@ -72,6 +73,11 @@ if [ -f "$INFRA/torrent/.env" ]; then
   d=$(env_get "$INFRA/torrent/.env" DOWNLOADS_DIR)
   DL=${d:-$DL}
 fi
+IOS=/srv/ron1n-ios
+if [ -f "$INFRA/ios/.env" ]; then
+  d=$(env_get "$INFRA/ios/.env" IOS_DIR)
+  IOS=${d:-$IOS}
+fi
 
 # Collegati via Tailscale? Togliere Tailscale chiude la connessione.
 via_tailscale=0
@@ -90,6 +96,7 @@ describe() {
     volumes) echo "volumi degli stack, con tutti i dati (database, configurazioni)" ;;
     images) echo "immagini Docker degli stack" ;;
     downloads) echo "cartella dei download $DL" ;;
+    ios) echo "cartella del builder iOS $IOS (Xcode.xip, SDK e IPA)" ;;
     firewall) echo "firewall ufw e le sue regole" ;;
     ssh) echo "regole SSH di ron1n (tornano quelle di Debian)" ;;
     tailscale) echo "Tailscale, il server esce dalla tailnet" ;;
@@ -145,7 +152,8 @@ stop_stacks() {
   IMAGES=
   for s in $stacks; do
     IMAGES="$IMAGES $(containers "$s" '{{.Image}}' | tr '\n' ' ')"
-    IMAGES="$IMAGES $(compose "$s" config --images 2>/dev/null | tr '\n' ' ')"
+    # Con tutti i profili, così c'è anche il builder iOS, che si lancia a mano.
+    IMAGES="$IMAGES $(compose "$s" --profile '*' config --images 2>/dev/null | tr '\n' ' ')"
   done
 
   # Spegnimento ordinato, come ./infra.sh down: prima Caddy, Postgres per
@@ -218,6 +226,16 @@ clean_downloads() {
     info "$DL cancellata"
   else
     info "$DL non c'è"
+  fi
+}
+
+clean_ios() {
+  step "Builder iOS"
+  if [ -d "$IOS" ]; then
+    rm -rf "$IOS"
+    info "$IOS cancellata"
+  else
+    info "$IOS non c'è"
   fi
 }
 
@@ -308,6 +326,7 @@ if chosen stacks; then
   clean_cert
 fi
 if chosen downloads; then clean_downloads; fi
+if chosen ios; then clean_ios; fi
 if chosen firewall; then remove_firewall; fi
 if chosen ssh; then remove_ssh; fi
 if chosen repo; then remove_repo; fi
