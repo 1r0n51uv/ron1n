@@ -41,7 +41,8 @@ In `.env`:
    docker compose -f infra/ios/compose.yaml run --rm ios-builder sdk
    ```
 
-4. Poi il `.xip` si può cancellare.
+4. Controlla che l'SDK sia sull'host, in `IOS_DIR/home/.swiftpm/swift-sdks`,
+   poi il `.xip` si può cancellare.
 
 La licenza di Xcode ne ammette l'uso solo su hardware Apple: estrarne
 l'SDK su Linux è una zona grigia, scelta sapendolo.

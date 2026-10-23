@@ -30,6 +30,9 @@ Accettazione:
 - [x] Tutto quello che pesa (Xcode.xip, SDK, sorgenti, IPA) sta nella
       cartella `IOS_DIR` dell'host, `/srv/ron1n-ios` di default: fuori da
       `/var`, che ha poco spazio. I file sono dell'utente degli stack.
+      Swift su Linux prende la home da `/etc/passwd`, non da `HOME`:
+      nell'immagine l'utente 1000 ha la home in `/work/home`, e con un
+      altro `PUID` il builder si ferma invece di perdere l'SDK.
 - [x] `sdk` installa l'SDK iOS dall'unico `.xip` in `IOS_DIR`, una volta
       sola; dopo, il `.xip` si può cancellare.
 - [x] `build [ref]` clona il repo `IOS_REPO` al ref dato (default `main`),

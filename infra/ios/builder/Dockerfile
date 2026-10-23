@@ -23,6 +23,10 @@ ENV PATH=/opt/xtool/usr/bin:$PATH
 
 COPY ios-build.sh /usr/local/bin/ios-build
 # HOME dentro /work: lì xtool e SwiftPM tengono SDK e cache, sull'host.
+# Swift su Linux prende la home da /etc/passwd e ignora HOME, quindi anche
+# l'utente 1000 (ubuntu, il PUID di default) ha la home in /work/home:
+# altrimenti l'SDK finisce nel container e sparisce con --rm.
+RUN usermod -d /work/home ubuntu
 ENV HOME=/work/home
 WORKDIR /work
 ENTRYPOINT ["ios-build"]
