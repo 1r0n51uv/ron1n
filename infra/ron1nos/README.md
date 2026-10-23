@@ -20,6 +20,13 @@ Poi apri `https://ron1n.home` via Tailscale. Per collegare YAZIO al
 modulo Nutrizione togli il commento alle variabili `YAZIO_*` nel `.env`,
 `docker compose up -d`, poi in Impostazioni › YAZIO premi Sincronizza ora.
 
+## Dati
+
+Il volume `workout-catalog` tiene la copia delle foto degli esercizi
+(free-exercise-db, modulo Allenamento): il container la scarica da GitHub
+al primo avvio e poi la serve dal disco. Se si cancella, si riscarica da
+sola.
+
 ## Aggiornamenti
 
 L'immagine `:main` viene pubblicata su GHCR a ogni merge su main e

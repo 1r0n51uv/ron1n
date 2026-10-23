@@ -15,9 +15,17 @@ services:
     # Per i servizi in rete host, come Glances (modulo Server).
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    # Copia del catalogo delle immagini degli esercizi (modulo Allenamento):
+    # si scarica al primo avvio e resta fra un aggiornamento e l'altro.
+    # Si può riscaricare in ogni momento, quindi niente backup.
+    volumes:
+      - workout-catalog:/data/workout-catalog
     networks:
       - proxy
       - db
+
+volumes:
+  workout-catalog:
 
 networks:
   proxy:
