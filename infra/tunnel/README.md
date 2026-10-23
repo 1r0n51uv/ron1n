@@ -18,6 +18,15 @@ Cloudflare: i passi sono in [`docs/server-setup.md`](../../docs/server-setup.md#
 Quale sito risponde a quale nome lo decide Caddy, in
 [`infra/proxy/Caddyfile`](../proxy/Caddyfile).
 
+## Protocollo
+
+Il tunnel usa HTTP/2 su TCP (`--protocol http2`), non QUIC, il default di
+`cloudflared`. Con QUIC, su UDP, due delle quattro connessioni (quelle
+verso Roma) restavano appese: le richieste che ci capitavano aspettavano
+da qualche secondo a un minuto, mentre il backend rispondeva in pochi
+millisecondi. Nei log `cloudflared` si vedeva
+`Incoming request ended abruptly: context canceled`.
+
 ## Limiti
 
 Il piano gratuito accetta richieste fino a 100 MB: un upload più grande
