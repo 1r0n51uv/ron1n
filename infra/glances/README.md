@@ -14,7 +14,7 @@ curl -s http://172.17.0.1:61208/api/4/quicklook   # dal server
 ```
 
 Poi ricarica Caddy (vedi `infra/README.md`) e apri
-`https://glances.ron1n.home` dalla tailnet per l'interfaccia web.
+`https://glances.home.ron1n.space` dalla tailnet per l'interfaccia web.
 
 ## Primo controllo
 
@@ -34,10 +34,10 @@ Al primo avvio verifica nell'interfaccia web che:
 - Glances ascolta solo su `172.17.0.1:61208`, l'IP dell'host sul bridge
   `docker0`. Lo raggiungono i container (Caddy e ron1nOS lo chiamano
   `host.docker.internal`), non la LAN né la tailnet direttamente.
-- L'interfaccia web passa da Caddy su `glances.ron1n.home`, solo tailnet.
+- L'interfaccia web passa da Caddy su `glances.home.ron1n.space`, solo tailnet.
   Mai via Cloudflare Tunnel: l'API non ha login e mostra l'elenco dei
   processi con le loro righe di comando.
-- In `glances.conf` l'API accetta solo gli Host `glances.ron1n.home`,
+- In `glances.conf` l'API accetta solo gli Host `glances.home.ron1n.space`,
   `host.docker.internal` e `172.17.0.1` (gli altri ricevono `400`) e nessuna
   origine cross-site, così una pagina web qualsiasi non può leggerla.
 - Se `docker0` avesse un altro indirizzo (`ip -4 addr show docker0`),

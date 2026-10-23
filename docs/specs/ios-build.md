@@ -45,7 +45,7 @@ Accettazione:
 - [x] Senza SDK, senza `.xip` o con un errore di compilazione si ferma con
       un messaggio che dice cosa fare.
 
-### IOSB-002 · Pagina di download su `ios.ron1n.home`
+### IOSB-002 · Pagina di download su `ios.home.ron1n.space`
 
 Stato: fatto (#38)
 
@@ -56,7 +56,7 @@ Accettazione:
 
 - [x] Lo stack `ios` ha un servizio `ios-builds` che pubblica
       `IOS_DIR/builds` in sola lettura, con l'elenco dei file; Caddy lo
-      espone su `https://ios.ron1n.home`, solo tailnet.
+      espone su `https://ios.home.ron1n.space`, solo tailnet.
 - [x] `./infra.sh up` crea `infra/ios/.env` e la cartella delle build, e
       avvia la pagina anche prima della prima build.
 - [x] Il bootstrap chiede `IOS_DIR`, `IOS_REPO` e `GITHUB_TOKEN`, il token

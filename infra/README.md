@@ -6,14 +6,14 @@ Uno stack Docker Compose per cartella. Sul server il repo è clonato in
 | Stack        | Contenuto                                                                                      |
 | ------------ | ---------------------------------------------------------------------------------------------- |
 | `proxy`      | Caddy, reverse proxy per tutti i servizi web                                                   |
-| `dns`        | CoreDNS, i nomi `*.ron1n.home` per i client della tailnet ([README](dns/README.md))            |
+| `dns`        | CoreDNS, i nomi `*.home.ron1n.space` per i client della tailnet ([README](dns/README.md))      |
 | `monitoring` | Uptime Kuma                                                                                    |
 | `updates`    | Watchtower, aggiorna solo i container con l'etichetta di opt-in                                |
 | `torrent`    | qBittorrent, client torrent usato dal modulo Download di ron1nOS ([README](torrent/README.md)) |
 | `glances`    | Glances, risorse del server per il modulo Server di ron1nOS ([README](glances/README.md))      |
 | `postgres`   | Postgres condiviso dalle app ([README](postgres/README.md))                                    |
-| `ron1nos`    | Dashboard ron1nOS su `ron1n.home` ([README](ron1nos/README.md))                                |
-| `ios`        | Build delle app iOS con xtool e pagina `ios.ron1n.home` ([README](ios/README.md))              |
+| `ron1nos`    | Dashboard ron1nOS su `home.ron1n.space` ([README](ron1nos/README.md))                          |
+| `ios`        | Build delle app iOS con xtool e pagina `ios.home.ron1n.space` ([README](ios/README.md))        |
 
 ## Avvio e spegnimento
 

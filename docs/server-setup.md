@@ -70,37 +70,45 @@ Riavvia una volta; se dopo il riavvio è tutto su,
 indietro: togli le due righe da `/etc/fstab`, riavvia e rinomina le
 cartelle `.old`.
 
+## Dominio e certificati
+
+I siti hanno certificati Let's Encrypt per `home.ron1n.space` e
+`*.home.ron1n.space` (SETUP-008): validi su ogni client, app iOS comprese,
+senza installare niente. Il dominio `ron1n.space` è registrato su Namecheap,
+ma i DNS li gestisce Cloudflare, perché Caddy deve poter scrivere il record
+TXT della verifica. Una volta sola:
+
+1. **Cloudflare:** Add a site → `ron1n.space` → piano Free. Non servono
+   record per `home.ron1n.space`: quei nomi li risolve solo la tailnet.
+2. **Namecheap:** Domain List → `ron1n.space` → Nameservers → Custom DNS,
+   con i due nameserver che indica Cloudflare. Di solito è attivo in meno di
+   un'ora; Cloudflare manda una mail.
+3. **Token:** su Cloudflare, My Profile → API Tokens → Create Token →
+   template "Edit zone DNS", zona `ron1n.space`. Mettilo in
+   `CF_API_TOKEN` di `infra/proxy/.env` (lo chiede anche il bootstrap) e
+   rilancia `sudo ./infra.sh up proxy`. Caddy prende i certificati da solo
+   e li rinnova.
+
+Il dominio dei nomi privati sta in `DOMINIO` di `infra/proxy/.env`; lo
+stack `dns` lo riprende da lì.
+
 ## Accesso dai client
 
-I siti del server (`https://ron1n.home`, `https://torrent.ron1n.home`…)
-si aprono dai dispositivi nella tailnet. Una volta per tutta la tailnet,
-poi una volta per dispositivo.
+I siti del server (`https://home.ron1n.space`,
+`https://torrent.home.ron1n.space`…) si aprono dai dispositivi nella
+tailnet.
 
 **Nomi, nella [console Tailscale](https://login.tailscale.com/admin/dns)
 (una volta):** DNS → Nameservers → Add nameserver → Custom, indirizzo =
 IP Tailscale del server (`tailscale ip -4`, lo stampa anche il bootstrap),
-attiva **Restrict to domain** e scrivi `ron1n.home`. Risponde lo stack
-[`dns`](../infra/dns/README.md). Sui client deve essere attivo "Use
-Tailscale DNS" (il default; su Linux `tailscale up --accept-dns`).
+attiva **Restrict to domain** e scrivi `home.ron1n.space`. Risponde lo
+stack [`dns`](../infra/dns/README.md). Sui client deve essere attivo "Use
+Tailscale DNS" (il default; su Linux `tailscale up --accept-dns`). Se
+avevi lo split DNS su `ron1n.home`, toglilo.
 
-**Certificato, su ogni dispositivo:** Caddy firma i siti con una sua CA,
-che va installata come attendibile. Da un dispositivo nella tailnet apri
-`http://ca.ron1n.home` (in HTTP: l'HTTPS diventa valido dopo). Se il
-browser passa da solo a https, accetta l'avviso sul certificato: la pagina
-c'è anche lì.
-
-- **iPhone/iPad:** apri il link in Safari (all'avviso "connessione non
-  privata": Mostra dettagli → Visita questo sito web) e consenti il
-  download del profilo. Impostazioni → Profilo scaricato → Installa. Poi Impostazioni →
-  Generali → Info → Impostazioni certificati attendibili e attiva la
-  fiducia completa per "Caddy Local Authority".
-- **macOS:** apri il file scaricato, finisce in Accesso Portachiavi; doppio
-  clic sul certificato → Fidati → Quando usi questo certificato: Fidati
-  sempre.
-- **Windows:** doppio clic sul file → Installa certificato → Computer
-  locale → Autorità di certificazione radice attendibili.
-
-Se lo stack proxy riparte da volumi nuovi la CA cambia: va reinstallata.
+**Certificati:** niente da fare. Se sul telefono c'è ancora il profilo
+"Caddy Local Authority" dei nomi `ron1n.home`, si può togliere da
+Impostazioni → Generali → VPN e gestione dispositivi.
 
 **SSH:** il bootstrap attiva Tailscale SSH, quindi da qualsiasi client
 SSH (anche Termius o Blink su iPhone) basta `ssh <utente>@ron1n`, senza

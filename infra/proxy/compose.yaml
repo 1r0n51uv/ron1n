@@ -3,11 +3,18 @@ name: proxy
 
 services:
   caddy:
-    image: caddy:2.10-alpine
+    # Costruita in locale da Dockerfile: Caddy più il plugin Cloudflare.
+    image: ron1n/caddy:2.10.2-cloudflare-0.2.4
+    build: .
     restart: unless-stopped
+    environment:
+      DOMINIO: ${DOMINIO:?manca DOMINIO in infra/proxy/.env}
+      CF_API_TOKEN: ${CF_API_TOKEN:?manca CF_API_TOKEN in infra/proxy/.env}
     ports:
       - "80:80"
       - "443:443"
+      # HTTP/3, che Caddy annuncia.
+      - "443:443/udp"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data

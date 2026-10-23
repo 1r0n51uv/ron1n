@@ -16,7 +16,7 @@ docker compose up -d
 docker compose ps               # lo stato diventa healthy
 ```
 
-Poi apri `https://ron1n.home` via Tailscale. Per collegare YAZIO al
+Poi apri `https://home.ron1n.space` via Tailscale. Per collegare YAZIO al
 modulo Nutrizione togli il commento alle variabili `YAZIO_*` nel `.env`,
 `docker compose up -d`, poi in Impostazioni › YAZIO premi Sincronizza ora.
 

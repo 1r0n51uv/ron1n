@@ -33,6 +33,7 @@ echo 'SEGRETO=cambiami' >"$repo/infra/aaa-nuovo/.env.example"
 printf 'name: zzz-libero\nservices: {}\n' >"$repo/infra/zzz-libero/compose.yaml"
 sed -i "s|^DOWNLOADS_DIR=.*|DOWNLOADS_DIR=$tmp/downloads|" "$repo/infra/torrent/.env.example"
 sed -i "s|^IOS_DIR=.*|IOS_DIR=$tmp/ios|" "$repo/infra/ios/.env.example"
+sed -i "s|^CF_API_TOKEN=.*|CF_API_TOKEN=finto|" "$repo/infra/proxy/.env.example"
 
 # docker finto: scrive in $LOG "<cartella> <argomenti>". Le reti esistono
 # solo dopo network create; ps elenca un container per gli stack in $UP.
@@ -100,6 +101,8 @@ check "up: DATABASE_URL usa la password di Postgres" \
 check "up: stesse credenziali qBittorrent" test "$(envval ron1nos QBT_PASSWORD)" = "$(envval torrent QBT_PASSWORD)"
 check "up: stesso utente qBittorrent" test "$(envval ron1nos QBT_USERNAME)" = "$(envval torrent QBT_USERNAME)"
 check "up: DNS con l'IP Tailscale" test "$(envval dns TS_IP)" = 100.64.0.7
+check "up: DNS con la zona del proxy" test "$(envval dns DOMINIO)" = "$(envval proxy DOMINIO)"
+check "up: zona di default" test "$(envval proxy DOMINIO)" = home.ron1n.space
 check "up: PUID dell'utente" test "$(envval torrent PUID)" = "$owner"
 check "up: cartella dei download creata" test -d "$tmp/downloads"
 check "up: cartella delle build iOS creata" test -d "$tmp/ios/builds"
@@ -127,6 +130,17 @@ check "down: stack spento non è un errore" grep -q "glances: già spento" "$tmp
 check "down: .env conservati" test -f "$repo/infra/postgres/.env"
 run down ron1nos
 check "down con nomi: solo quelli" test "$(order down)" = "ron1nos "
+
+# Senza token Cloudflare il proxy non parte, e lo dice.
+sed -i "s|^CF_API_TOKEN=.*|CF_API_TOKEN=|" "$repo/infra/proxy/.env"
+run up proxy
+check "proxy senza token: non avviato" test -z "$(order up)"
+check "proxy senza token: lo dice" grep -q "proxy: manca CF_API_TOKEN" "$tmp/out"
+
+# Un dns/.env di prima di SETUP-008, senza zona: la riprende dal proxy.
+sed -i '/^DOMINIO=/d' "$repo/infra/dns/.env"
+run up dns
+check "dns/.env vecchio: aggiunge DOMINIO" test "$(envval dns DOMINIO)" = home.ron1n.space
 
 # Senza Tailscale il DNS non ha .env e non parte.
 rm -f "$repo/infra/dns/.env" "$bin/tailscale"

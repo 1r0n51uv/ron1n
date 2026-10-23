@@ -422,10 +422,11 @@ ask_stack_env() {
           val=$REPLY
         }
         ;;
+      dns:DOMINIO) val=$(env_get "$INFRA_DIR/proxy/.env" DOMINIO) ;;
       ron1nos:QBT_USERNAME | ron1nos:QBT_PASSWORD)
         val=$(env_get "$INFRA_DIR/torrent/.env" "$key")
         ;;
-      ios:GITHUB_TOKEN)
+      ios:GITHUB_TOKEN | proxy:CF_API_TOKEN)
         env_help "$tmp" "$key" >/dev/tty
         ask_secret "$key (invio = vuoto)"
         val=$REPLY
@@ -479,13 +480,14 @@ ask_envs() {
   fi
   info "Invio accetta il valore tra parentesi; le password non si vedono mentre scrivi."
   trap 'stty echo </dev/tty 2>/dev/null; exit 130' INT TERM
-  # Postgres e torrent prima di ron1nos, che ne riprende le password.
+  # Postgres e torrent prima di ron1nos, che ne riprende le password;
+  # proxy prima di dns, che ne riprende la zona.
   ordered=
-  for s in postgres torrent; do
+  for s in postgres torrent proxy; do
     case " $missing " in *" $s "*) ordered="$ordered $s" ;; esac
   done
   for s in $missing; do
-    case $s in postgres | torrent) ;; *) ordered="$ordered $s" ;; esac
+    case $s in postgres | torrent | proxy) ;; *) ordered="$ordered $s" ;; esac
   done
   for s in $ordered; do ask_stack_env "$s"; done
   trap - INT TERM
@@ -502,39 +504,24 @@ start_stacks() {
 summary() {
   step "Fatto"
   proxy=$RON1N_DIR/infra/proxy
-  hosts=$(sed -n 's/^\([a-z0-9.-]*\.home\) {$/\1/p' "$proxy/Caddyfile" | tr '\n' ' ')
+  dominio=$(env_get "$proxy/.env" DOMINIO)
+  # I nomi dei siti dai matcher del Caddyfile (@nome host ...).
+  hosts=$(sed -n 's/^[[:space:]]*@[a-z]* host \(.*\)$/\1/p' "$proxy/Caddyfile" |
+    sed "s/{\$DOMINIO}/$dominio/g" | tr '\n' ' ')
   ts_ip=$(tailscale ip -4 2>/dev/null || echo '<ip-tailscale>')
-
-  # Certificato radice di Caddy (local_certs), da installare sui client.
-  ca="$ADMIN_HOME/ron1n-caddy-root.crt"
-  i=0
-  while [ $i -lt 15 ]; do
-    if compose "$proxy" exec -T caddy \
-      cat /data/caddy/pki/authorities/local/root.crt >"$ca.tmp" 2>/dev/null && [ -s "$ca.tmp" ]; then
-      mv "$ca.tmp" "$ca"
-      chown "$ADMIN_UID:$ADMIN_GID" "$ca"
-      break
-    fi
-    i=$((i + 1))
-    sleep 2
-  done
-  rm -f "$ca.tmp"
 
   echo
   echo "  Server nella tailnet: $ts_ip"
   echo
-  echo "  Nomi *.ron1n.home per tutti i client, telefono compreso (una volta sola):"
+  echo "  Nomi *.$dominio per tutti i client, telefono compreso (una volta sola):"
   echo "    console Tailscale, DNS > Add nameserver > Custom: $ts_ip"
-  echo "    con \"Restrict to domain\" (split DNS) su ron1n.home"
+  echo "    con \"Restrict to domain\" (split DNS) su $dominio"
   echo
-  if [ -f "$ca" ]; then
-    echo "  Certificato radice di Caddy, da installare come autorità attendibile sui"
-    echo "  client: http://ca.ron1n.home dal client, oppure $ca"
-    echo "  (scp $ADMIN@$ts_ip:ron1n-caddy-root.crt .). Passi in docs/server-setup.md."
-  else
-    echo "  Il certificato radice di Caddy non è ancora pronto: rilancia lo script tra poco."
+  if [ -z "$(env_get "$proxy/.env" CF_API_TOKEN)" ]; then
+    echo "  Manca CF_API_TOKEN in $proxy/.env: senza, Caddy non ha i certificati."
+    echo "  Passi in docs/server-setup.md."
+    echo
   fi
-  echo
   echo "  Indirizzi, dalla tailnet:"
   for h in $hosts; do echo "    https://$h"; done
   echo

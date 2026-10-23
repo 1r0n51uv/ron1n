@@ -22,7 +22,7 @@ modifica il `.env` e si riavvia il container. Una password cambiata dalla
 Web UI viene sovrascritta al riavvio successivo. Lo script deve restare
 eseguibile e di proprietà di root, altrimenti l'immagine lo salta.
 
-Apri `https://torrent.ron1n.home` (via Tailscale) e in Strumenti → Opzioni
+Apri `https://torrent.home.ron1n.space` (via Tailscale) e in Strumenti → Opzioni
 → Web UI:
 
 1. **Non attivare** "Salta l'autenticazione per i client in localhost" né

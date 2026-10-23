@@ -175,6 +175,8 @@ make_envs() {
 
   env_create "$INFRA/ios" "PUID=$OWNER_UID" "PGID=$OWNER_GID"
 
+  env_create "$INFRA/proxy"
+
   if [ -f "$INFRA/ron1nos/compose.yaml" ] && [ ! -f "$INFRA/ron1nos/.env" ]; then
     if [ ! -f "$INFRA/postgres/.env" ] || [ ! -f "$INFRA/torrent/.env" ]; then
       die "per creare ron1nos/.env servono postgres/.env e torrent/.env"
@@ -191,10 +193,15 @@ make_envs() {
   if [ -f "$INFRA/dns/compose.yaml" ] && [ ! -f "$INFRA/dns/.env" ]; then
     ts_ip=$(tailscale ip -4 2>/dev/null | head -n 1) || ts_ip=
     if [ -n "$ts_ip" ]; then
-      env_create "$INFRA/dns" "TS_IP=$ts_ip"
+      env_create "$INFRA/dns" "TS_IP=$ts_ip" "DOMINIO=$(env_get "$INFRA/proxy/.env" DOMINIO)"
     else
       info "dns: Tailscale non risponde, niente .env (scrivi TS_IP in infra/dns/.env)"
     fi
+  fi
+  # Un dns/.env di prima di SETUP-008 non ha la zona: la prende dal proxy.
+  if [ -f "$INFRA/dns/.env" ] && ! grep -q '^DOMINIO=' "$INFRA/dns/.env"; then
+    echo "DOMINIO=$(env_get "$INFRA/proxy/.env" DOMINIO)" >>"$INFRA/dns/.env"
+    info "dns/.env: aggiunto DOMINIO"
   fi
 }
 
@@ -254,6 +261,11 @@ cmd_up() {
     dir=$INFRA/$s
     if [ -f "$dir/.env.example" ] && [ ! -f "$dir/.env" ]; then
       info "$s: manca .env, non lo avvio (copia .env.example in .env, adattalo e rilancia)"
+      continue
+    fi
+    # Senza token Cloudflare Caddy non ha certificati e non parte (SETUP-008).
+    if [ "$s" = proxy ] && [ -z "$(env_get "$dir/.env" CF_API_TOKEN)" ]; then
+      info "proxy: manca CF_API_TOKEN in infra/proxy/.env, non lo avvio (docs/server-setup.md)"
       continue
     fi
     info "$s"

@@ -1,42 +1,47 @@
-# Nomi interni, raggiungibili via Tailscale. TLS interno di Caddy finché
-# non c'è un dominio vero.
-{
-	local_certs
-}
+# Nomi privati sotto DOMINIO (home.ron1n.space), raggiungibili solo dalla
+# tailnet: li risolve lo stack dns, su internet non esistono. Certificati
+# Let's Encrypt con la verifica DNS-01 su Cloudflare: validi su ogni client
+# senza installare niente, e con il wildcard i nomi dei servizi non
+# finiscono nei registri pubblici dei certificati. Spec SETUP-008.
+{$DOMINIO}, *.{$DOMINIO} {
+	tls {
+		dns cloudflare {env.CF_API_TOKEN}
+		# Il TXT della verifica si controlla su un DNS pubblico.
+		resolvers 1.1.1.1
+	}
 
-# Certificato radice di Caddy, da installare sui client (iPhone compreso)
-# perché i siti *.ron1n.home siano attendibili. In HTTP, perché prima di
-# installarlo l'HTTPS dà errore; anche in HTTPS, perché Safari passa da solo
-# a https: lì si accetta l'avviso e si scarica. Solo tailnet. Spec SETUP-006.
-ca.ron1n.home, http://ca.ron1n.home {
-	root * /data/caddy/pki/authorities/local
-	rewrite * /root.crt
-	# Con questo tipo Safari su iOS propone di installare il profilo.
-	header Content-Type application/x-x509-ca-cert
-	file_server
-}
+	# Dashboard ron1nOS (stack ron1nos): SPA e API /api/v1.
+	@home host {$DOMINIO}
+	handle @home {
+		reverse_proxy ron1nos:8080
+	}
 
-# Dashboard ron1nOS (stack ron1nos): SPA e API /api/v1. Solo tailnet.
-ron1n.home {
-	reverse_proxy ron1nos:8080
-}
+	@status host status.{$DOMINIO}
+	handle @status {
+		reverse_proxy uptime-kuma:3001
+	}
 
-status.ron1n.home {
-	reverse_proxy uptime-kuma:3001
-}
+	# Web UI e Web API di qBittorrent (stack torrent).
+	@torrent host torrent.{$DOMINIO}
+	handle @torrent {
+		reverse_proxy qbittorrent:8080
+	}
 
-# Web UI e Web API di qBittorrent (stack torrent). Solo tailnet.
-torrent.ron1n.home {
-	reverse_proxy qbittorrent:8080
-}
+	# Interfaccia web di Glances (stack glances, rete dell'host).
+	@glances host glances.{$DOMINIO}
+	handle @glances {
+		reverse_proxy host.docker.internal:61208
+	}
 
-# Interfaccia web di Glances (stack glances, rete dell'host). Solo tailnet.
-glances.ron1n.home {
-	reverse_proxy host.docker.internal:61208
-}
+	# IPA delle app iOS compilate sul server (stack ios), da aprire con
+	# SideStore. Spec IOSB-002.
+	@ios host ios.{$DOMINIO}
+	handle @ios {
+		reverse_proxy ios-builds:80
+	}
 
-# IPA delle app iOS compilate sul server (stack ios), da aprire con
-# SideStore. Solo tailnet. Spec IOSB-002.
-ios.ron1n.home {
-	reverse_proxy ios-builds:80
+	# Un nome che non è di nessun servizio.
+	handle {
+		abort
+	}
 }

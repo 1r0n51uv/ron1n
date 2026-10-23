@@ -4,7 +4,7 @@
 name: ios
 
 services:
-  # Pagina https://ios.ron1n.home: le IPA di IOS_DIR/builds, in sola
+  # Pagina https://ios.home.ron1n.space: le IPA di IOS_DIR/builds, in sola
   # lettura, con l'elenco dei file. Solo tailnet, via Caddy. IOSB-002.
   ios-builds:
     image: caddy:2.10-alpine

@@ -15,7 +15,10 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  # Le stesse versioni di infra/proxy/Dockerfile.
   CADDY_VERSION: 2.10.2
+  CADDY_DNS_CLOUDFLARE: v0.2.4
+  XCADDY_VERSION: v0.4.5
   ACTIONLINT_VERSION: 1.7.7
 
 jobs:
@@ -33,11 +36,17 @@ jobs:
       # shellcheck è già sul runner ubuntu-latest.
       - run: npm run lint:sh
       - run: npm run test:sh
-      - name: Installa caddy e actionlint
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+          cache: false
+      - name: Installa caddy (con il plugin Cloudflare) e actionlint
         run: |
           mkdir -p "$RUNNER_TEMP/bin"
-          curl -sSL "https://github.com/caddyserver/caddy/releases/download/v${CADDY_VERSION}/caddy_${CADDY_VERSION}_linux_amd64.tar.gz" \
-            | tar xz -C "$RUNNER_TEMP/bin" caddy
+          GOBIN="$RUNNER_TEMP/bin" go install "github.com/caddyserver/xcaddy/cmd/xcaddy@${XCADDY_VERSION}"
+          "$RUNNER_TEMP/bin/xcaddy" build "v${CADDY_VERSION}" \
+            --with "github.com/caddy-dns/cloudflare@${CADDY_DNS_CLOUDFLARE}" --output "$RUNNER_TEMP/bin/caddy"
+          "$RUNNER_TEMP/bin/caddy" list-modules | grep -q '^dns.providers.cloudflare$'
           curl -sSL "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" \
             | tar xz -C "$RUNNER_TEMP/bin" actionlint
           echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"

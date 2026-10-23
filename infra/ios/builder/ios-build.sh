@@ -107,7 +107,7 @@ cmd_build() {
   mv "$BUILDS/$app.ipa.tmp" "$BUILDS/$app.ipa"
   prune "$app"
   info "$app-$sha.ipa, anche come $app.ipa"
-  info "dal telefono: https://ios.ron1n.home/$app.ipa, poi Apri con SideStore"
+  info "dal telefono: https://ios.home.ron1n.space/$app.ipa, poi Apri con SideStore"
 }
 
 main() {
