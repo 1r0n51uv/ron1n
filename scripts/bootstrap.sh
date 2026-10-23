@@ -512,7 +512,6 @@ summary() {
   echo
   echo "  Credenziali:"
   echo "    qBittorrent  $(env_get "$RON1N_DIR/infra/torrent/.env" QBT_USERNAME) / $(env_get "$RON1N_DIR/infra/torrent/.env" QBT_PASSWORD)"
-  echo "    Webtop       $(env_get "$RON1N_DIR/infra/webtop/.env" CUSTOM_USER) / $(env_get "$RON1N_DIR/infra/webtop/.env" PASSWORD)"
   if grep -q '^AUTH_PASSWORD_HASH=' "$RON1N_DIR/infra/ron1nos/.env" 2>/dev/null; then
     echo "    ron1nOS      la password scelta"
   else

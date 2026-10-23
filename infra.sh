@@ -14,7 +14,7 @@ INFRA=$ROOT/infra
 # Ordine di avvio: Postgres prima di ron1nOS, Caddy per ultimo, così un
 # servizio è raggiungibile solo quando c'è. Lo spegnimento va al contrario.
 # Gli stack nuovi, non ancora qui, partono dopo questi in ordine alfabetico.
-ORDER="postgres torrent glances webtop ron1nos monitoring updates proxy"
+ORDER="postgres torrent glances ron1nos monitoring updates proxy"
 # Stack da aspettare finché il healthcheck è verde prima di passare al
 # successivo.
 WAIT="postgres"
@@ -172,10 +172,6 @@ make_envs() {
   env_create "$INFRA/torrent" \
     "PUID=$OWNER_UID" "PGID=$OWNER_GID" \
     "QBT_PASSWORD=$(rand)"
-
-  env_create "$INFRA/webtop" \
-    "PUID=$OWNER_UID" "PGID=$OWNER_GID" \
-    "PASSWORD=$(rand)"
 
   if [ -f "$INFRA/ron1nos/compose.yaml" ] && [ ! -f "$INFRA/ron1nos/.env" ]; then
     if [ ! -f "$INFRA/postgres/.env" ] || [ ! -f "$INFRA/torrent/.env" ]; then
