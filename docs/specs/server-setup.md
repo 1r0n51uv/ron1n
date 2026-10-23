@@ -49,16 +49,58 @@ quello che il bootstrap ha messo, chiedendo cosa eliminare.
 Accettazione:
 
 - [x] Chiede una voce alla volta, con no come risposta di default: stack
-      (container, volumi con i dati, immagini, reti, `.env`), cartella dei
-      download, Docker, firewall, regole SSH di ron1n, Tailscale, copia del
-      repo sul server.
+      (container, reti, `.env`), volumi, immagini, cartella dei download,
+      firewall, regole SSH di ron1n, Tailscale, copia del repo sul server
+      (SETUP-004).
 - [x] Prima di cominciare mostra il riepilogo e vuole `cancella` scritto
       per esteso; con qualsiasi altra risposta non tocca niente.
 - [x] Senza terminale le voci si scelgono con le opzioni (`--stacks`,
       `--all`…) e `--yes` salta la conferma.
 - [x] Gli stack si spengono in ordine, come `./infra.sh down`, prima di
-      cancellarne i dati. Togliere Docker comprende gli stack.
+      cancellarne i dati.
 - [x] Tailscale si toglie per ultimo; se la sessione SSH passa dalla
       tailnet, la rimozione finisce anche quando la connessione cade.
 - [x] Non tocca mai il repo su GitHub, i pacchetti di base, gli
       aggiornamenti automatici e il gruppo `sudo` dell'utente.
+
+### SETUP-003 · Il bootstrap chiede i `.env`
+
+Stato: in corso
+
+Prima del primo avvio il bootstrap chiede sul terminale i valori dei `.env`
+degli stack, così parte tutto già configurato e non con valori di prova.
+
+Accettazione:
+
+- [x] Per ogni stack senza `.env` chiede ogni voce di `.env.example`,
+      con il suo commento come spiegazione e il valore di esempio come
+      default; il fuso orario una volta sola.
+- [x] Password senza eco e scritte due volte; con invio una casuale. Le
+      password di Postgres solo con caratteri validi in un URL.
+- [x] Non chiede `PUID`/`PGID` (l'utente amministratore) né i valori che
+      un altro stack ha già: credenziali di qBittorrent e `DATABASE_URL`
+      di ron1nOS si riprendono da torrent e postgres.
+- [x] ron1nOS: password della dashboard (almeno 12 caratteri) trasformata
+      nell'hash scrypt di `AUTH_PASSWORD_HASH`; con il login, chiave del
+      modulo Documenti generata; account YAZIO facoltativo, con la chiave
+      dei token generata.
+- [x] Valori con `$`, spazi o simili tra apici singoli, letti alla lettera
+      da Compose. `.env` con permessi `600`, dell'amministratore.
+- [x] Un `.env` che c'è già non si tocca; senza terminale li crea
+      `./infra.sh up` con password casuali, come prima.
+- [x] Alla fine stampa gli indirizzi `https://` dei servizi, il percorso
+      di ogni `.env` e il promemoria di salvare `DOCUMENTS_KEY`.
+
+### SETUP-004 · Cleanup senza Docker, volumi e immagini a parte
+
+Stato: in corso
+
+Accettazione:
+
+- [x] Il cleanup non disinstalla più Docker Engine né toglie il gruppo
+      `docker`: niente più voce `--docker`.
+- [x] Volumi (`--volumes`) e immagini (`--images`) sono voci a sé,
+      separate dagli stack (container, reti, `.env`, certificato di
+      Caddy). Per toglierli spegne gli stack, ma lascia i `.env`.
+- [x] Se si cancellano i `.env` ma non i volumi, il riepilogo avverte che
+      Postgres tiene le password vecchie.
