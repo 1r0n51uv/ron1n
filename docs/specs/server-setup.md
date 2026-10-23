@@ -107,7 +107,7 @@ Accettazione:
 
 ### SETUP-005 · Nomi `*.ron1n.home` su tutti i client
 
-Stato: in corso (#28)
+Stato: fatto (#30)
 
 Telefono, tablet e computer della tailnet aprono i siti `*.ron1n.home`
 senza toccare il file hosts, che su iOS non si può modificare.
@@ -129,7 +129,7 @@ Accettazione:
 
 ### SETUP-006 · Certificato di Caddy scaricabile dai client
 
-Stato: in corso (#29)
+Stato: in corso (#31)
 
 Il certificato radice di Caddy si installa da un client senza `scp`,
 anche da iPhone.
@@ -140,6 +140,9 @@ Accettazione:
       certificato radice di Caddy con il tipo
       `application/x-x509-ca-cert`, così Safari su iOS propone di
       installarlo come profilo.
+- [x] Risponde anche in `https://ca.ron1n.home`, senza redirect da HTTP:
+      Safari passa da solo a https, e lì basta accettare l'avviso del
+      certificato non ancora attendibile.
 - [x] Qualsiasi percorso dà il certificato: la chiave privata della CA non
       è mai raggiungibile.
 - [x] `docs/server-setup.md` spiega come installarlo e renderlo
