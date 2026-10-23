@@ -209,6 +209,10 @@ Accettazione:
       service token (header `CF-Access-Client-Id` e
       `CF-Access-Client-Secret`). Nessun nome passa dal tunnel senza
       Access, Glances e qBittorrent compresi, che non hanno login.
+- [x] Il tunnel si collega a Cloudflare in HTTP/2 su TCP
+      (`--protocol http2`), non in QUIC: in QUIC le connessioni verso
+      alcuni data center restavano appese e le richieste duravano fino a
+      un minuto.
 - [x] `docs/server-setup.md` spiega come creare tunnel, hostname
       wildcard, applicazione Access, policy e service token nella
       dashboard Cloudflare. Ricorda il limite di 100 MB per richiesta del
