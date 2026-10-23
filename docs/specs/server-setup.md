@@ -150,7 +150,7 @@ Accettazione:
 
 ### SETUP-007 · Dati di Docker sul disco grande
 
-Stato: proposto
+Stato: fatto (#41)
 
 Immagini, container, volumi e cache di build stanno su `/srv`, la
 partizione grande, non su `/var`, che sul mini PC è di 12 GB e si riempie
@@ -158,16 +158,16 @@ con un paio di immagini pesanti (come il builder iOS).
 
 Accettazione:
 
-- [ ] Se `/srv` è un filesystem diverso da quello di `/var`, il bootstrap,
+- [x] Se `/srv` è un filesystem diverso da quello di `/var`, il bootstrap,
       prima di installare Docker, crea `/srv/docker` e `/srv/containerd`
       e li monta in bind su `/var/lib/docker` e `/var/lib/containerd`
       con due righe in `/etc/fstab` (dopo il mount di `/srv`). La
       configurazione di Docker e di containerd non cambia: con Docker 29
       le immagini stanno nello snapshotter di containerd, e `data-root`
       da solo non le sposterebbe.
-- [ ] Se Docker ha già dati in `/var/lib/docker` o `/var/lib/containerd`
+- [x] Se Docker ha già dati in `/var/lib/docker` o `/var/lib/containerd`
       non li sposta: lo dice e rimanda alla procedura manuale.
-- [ ] Si può rilanciare: le righe in `/etc/fstab` non si duplicano.
-- [ ] `docs/server-setup.md` ha la procedura per spostare a mano i dati
+- [x] Si può rilanciare: le righe in `/etc/fstab` non si duplicano.
+- [x] `docs/server-setup.md` ha la procedura per spostare a mano i dati
       di un server già installato, con il modo per tornare indietro.
-- [ ] Il cleanup lascia i bind mount, come lascia Docker Engine.
+- [x] Il cleanup lascia i bind mount, come lascia Docker Engine.
