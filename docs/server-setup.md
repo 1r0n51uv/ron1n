@@ -76,8 +76,42 @@ I siti si aprono da ogni rete su `https://<nome>.ron1n.space`
 (`home.ron1n.space` è la dashboard): li porta il Cloudflare Tunnel dello
 stack [`tunnel`](../infra/tunnel/README.md) e li protegge Cloudflare Access
 (SETUP-008). Niente VPN né certificati da installare. Il dominio è
-registrato su Namecheap con i nameserver di Cloudflare. Una volta sola,
-nella dashboard di Cloudflare, con il dominio già "Active":
+registrato su Namecheap con i nameserver di Cloudflare. Tutto sul piano
+gratuito.
+
+**Con lo script** (SETUP-010), con il dominio già "Active":
+
+1. In Zero Trust scegli un team name e il piano Free: va fatto una volta
+   dalla dashboard, l'API non lo attiva.
+2. **My Profile → API Tokens → Create Token → Custom token**, con solo
+   questi permessi e una scadenza breve:
+   - Account › Cloudflare Tunnel › Edit
+   - Account › Access: Apps and Policies › Edit
+   - Account › Access: Service Tokens › Edit
+   - Zone › DNS › Edit, solo sulla zona del dominio
+3. Sul server, in `~/.cf-home/.env` con permessi 600:
+
+   ```sh
+   CLOUDFLARE_API_TOKEN=...
+   CLOUDFLARE_ACCOUNT_ID=...   # nella pagina Overview del dominio
+   ACCESS_EMAIL=...            # chi entra dal browser
+   ```
+
+4. Lancia, prima in prova:
+
+   ```sh
+   cd /opt/ron1n
+   scripts/cloudflare.sh --dry-run
+   scripts/cloudflare.sh
+   sudo sed -i "s|^TUNNEL_TOKEN=.*|TUNNEL_TOKEN=$(cat ~/.cf-home/tunnel-token)|" infra/tunnel/.env
+   sudo ./infra.sh up tunnel
+   ```
+
+5. Le credenziali dell'app iOS sono in `~/.cf-home/ron1nos-ios.json`:
+   copiale dal telefono, mai in una chat. Per cambiarle,
+   `scripts/cloudflare.sh --ruota`. Alla fine cancella l'API token.
+
+**A mano**, nella dashboard di Cloudflare:
 
 1. **Tunnel:** Zero Trust → Networks → Tunnels → Create a tunnel →
    Cloudflared, nome `ron1n`. Nella pagina "Install connector" copia il
