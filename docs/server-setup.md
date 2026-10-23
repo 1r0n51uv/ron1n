@@ -11,7 +11,7 @@ indirizzi dei servizi e dove stanno i `.env`.
 curl -fsSL https://raw.githubusercontent.com/1r0n51uv/ron1n/main/scripts/bootstrap.sh | sh
 ```
 
-Per usare i servizi dai client vedi [Accesso dai client](#accesso-dai-client).
+Per usare i servizi dai client vedi [Accesso da fuori con Cloudflare](#accesso-da-fuori-con-cloudflare).
 
 Per tornare indietro, `sudo /opt/ron1n/scripts/cleanup.sh` chiede cosa
 eliminare (stack, volumi, immagini, download, firewall, SSH, Tailscale,
@@ -70,37 +70,37 @@ Riavvia una volta; se dopo il riavvio è tutto su,
 indietro: togli le due righe da `/etc/fstab`, riavvia e rinomina le
 cartelle `.old`.
 
-## Accesso dai client
+## Accesso da fuori con Cloudflare
 
-I siti del server (`https://ron1n.home`, `https://torrent.ron1n.home`…)
-si aprono dai dispositivi nella tailnet. Una volta per tutta la tailnet,
-poi una volta per dispositivo.
+I siti si aprono da ogni rete su `https://<nome>.ron1n.space`
+(`home.ron1n.space` è la dashboard): li porta il Cloudflare Tunnel dello
+stack [`tunnel`](../infra/tunnel/README.md) e li protegge Cloudflare Access
+(SETUP-008). Niente VPN né certificati da installare. Il dominio è
+registrato su Namecheap con i nameserver di Cloudflare. Una volta sola,
+nella dashboard di Cloudflare, con il dominio già "Active":
 
-**Nomi, nella [console Tailscale](https://login.tailscale.com/admin/dns)
-(una volta):** DNS → Nameservers → Add nameserver → Custom, indirizzo =
-IP Tailscale del server (`tailscale ip -4`, lo stampa anche il bootstrap),
-attiva **Restrict to domain** e scrivi `ron1n.home`. Risponde lo stack
-[`dns`](../infra/dns/README.md). Sui client deve essere attivo "Use
-Tailscale DNS" (il default; su Linux `tailscale up --accept-dns`).
+1. **Tunnel:** Zero Trust → Networks → Tunnels → Create a tunnel →
+   Cloudflared, nome `ron1n`. Nella pagina "Install connector" copia il
+   token (la stringa dopo `--token`) in `TUNNEL_TOKEN` di
+   `infra/tunnel/.env` e lancia `sudo ./infra.sh up tunnel`: il connettore
+   diventa "Healthy".
+2. **Hostname:** nel tunnel, Public Hostname → Add: sottodominio `*`,
+   dominio `ron1n.space`, servizio `HTTP` `caddy:80`. Cloudflare crea da
+   solo il record DNS wildcard. Il sito giusto per ogni nome lo sceglie
+   Caddy.
+3. **Access:** Zero Trust → Access → Applications → Add → Self-hosted,
+   dominio `*.ron1n.space`, durata della sessione 1 mese. Policy "Allow"
+   con Include → Emails → la tua email. In Settings → Authentication puoi
+   aggiungere Google accanto al codice via mail (One-time PIN).
+4. **Service token per l'app iOS:** Zero Trust → Access → Service
+   Auth → Create service token, nome `ron1nos-ios`. Copia subito Client ID
+   e Client Secret (il secret si vede una volta sola); nell'applicazione
+   del punto 3 aggiungi una policy "Service Auth" con Include → Service
+   Token → `ron1nos-ios`.
 
-**Certificato, su ogni dispositivo:** Caddy firma i siti con una sua CA,
-che va installata come attendibile. Da un dispositivo nella tailnet apri
-`http://ca.ron1n.home` (in HTTP: l'HTTPS diventa valido dopo). Se il
-browser passa da solo a https, accetta l'avviso sul certificato: la pagina
-c'è anche lì.
-
-- **iPhone/iPad:** apri il link in Safari (all'avviso "connessione non
-  privata": Mostra dettagli → Visita questo sito web) e consenti il
-  download del profilo. Impostazioni → Profilo scaricato → Installa. Poi Impostazioni →
-  Generali → Info → Impostazioni certificati attendibili e attiva la
-  fiducia completa per "Caddy Local Authority".
-- **macOS:** apri il file scaricato, finisce in Accesso Portachiavi; doppio
-  clic sul certificato → Fidati → Quando usi questo certificato: Fidati
-  sempre.
-- **Windows:** doppio clic sul file → Installa certificato → Computer
-  locale → Autorità di certificazione radice attendibili.
-
-Se lo stack proxy riparte da volumi nuovi la CA cambia: va reinstallata.
+Dal browser, al primo accesso Access chiede il codice via mail (o Google)
+e poi ricorda il dispositivo per un mese, per tutti i nomi. Il piano
+gratuito accetta richieste fino a 100 MB.
 
 **SSH:** il bootstrap attiva Tailscale SSH, quindi da qualsiasi client
 SSH (anche Termius o Blink su iPhone) basta `ssh <utente>@ron1n`, senza

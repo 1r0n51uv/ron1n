@@ -1,6 +1,6 @@
 # Dashboard ron1nOS: un solo container Node che serve la SPA e l'API
-# /api/v1 sulla porta 8080, pubblicato da Caddy su ron1n.home (solo
-# tailnet). Parla con qBittorrent sulla rete proxy e con Postgres
+# /api/v1 sulla porta 8080, pubblicato da Caddy su home.ron1n.space (dietro
+# Cloudflare Access). Parla con qBittorrent sulla rete proxy e con Postgres
 # (infra/postgres) sulla rete db. Il servizio si chiama
 # ron1nos, non app: sulla rete proxy il nome deve essere unico.
 name: ron1nos

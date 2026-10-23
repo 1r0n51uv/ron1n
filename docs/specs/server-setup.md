@@ -129,7 +129,7 @@ Accettazione:
 
 ### SETUP-006 · Certificato di Caddy scaricabile dai client
 
-Stato: fatto (#32) · da togliere con SETUP-008
+Stato: superato da SETUP-008 (#49)
 
 Il certificato radice di Caddy si installa da un client senza `scp`,
 anche da iPhone.
@@ -174,7 +174,7 @@ Accettazione:
 
 ### SETUP-008 · Accesso da fuori con Cloudflare Tunnel e Access
 
-Stato: da fare
+Stato: fatto (#49)
 
 I siti del server si aprono da ogni client, dentro e fuori casa, senza VPN
 né certificati da installare: li pubblica un Cloudflare Tunnel su
@@ -185,35 +185,35 @@ iPhone è in conflitto con quella di SideStore.
 
 Accettazione:
 
-- [ ] Uno stack `tunnel` con `cloudflared` a versione fissa, in rete
+- [x] Uno stack `tunnel` con `cloudflared` a versione fissa, in rete
       `proxy`, lancia il tunnel con `TUNNEL_TOKEN` in
       `infra/tunnel/.env` (il bootstrap lo chiede senza mostrarlo; senza,
       lo stack non parte). Connessione solo in uscita: il router non si
       tocca.
-- [ ] Il tunnel ha un solo hostname pubblico, `*.ron1n.space` →
+- [x] Il tunnel ha un solo hostname pubblico, `*.ron1n.space` →
       `http://caddy:80`, più il record DNS wildcard: è Caddy a smistare
       per nome, nel Caddyfile versionato. Un solo livello di sottodominio,
       perché il certificato gratuito di Cloudflare copre `*.ron1n.space` e
       non `*.home.ron1n.space`.
-- [ ] I nomi: `home.ron1n.space` per la dashboard, poi `status.`,
+- [x] I nomi: `home.ron1n.space` per la dashboard, poi `status.`,
       `torrent.`, `glances.` e `ios.ron1n.space`. Il dominio sta in
       `DOMINIO` (default `ron1n.space`) in `infra/proxy/.env`, non scritto
       a mano nei file.
-- [ ] Caddy serve solo HTTP sulla rete `proxy`, niente certificati né
+- [x] Caddy serve solo HTTP sulla rete `proxy`, niente certificati né
       porte pubblicate sull'host: HTTPS lo fa Cloudflare. Si fida di
       `X-Forwarded-*` dal tunnel (`trusted_proxies`), così i backend vedono
       `https` e l'IP vero del client. Un nome che non è di nessun servizio
       riceve un errore.
-- [ ] Cloudflare Access protegge `*.ron1n.space`: dal browser si entra con
+- [x] Cloudflare Access protegge `*.ron1n.space`: dal browser si entra con
       un codice via mail all'indirizzo del proprietario; l'app iOS con un
       service token (header `CF-Access-Client-Id` e
       `CF-Access-Client-Secret`). Nessun nome passa dal tunnel senza
       Access, Glances e qBittorrent compresi, che non hanno login.
-- [ ] `docs/server-setup.md` spiega come creare tunnel, hostname
+- [x] `docs/server-setup.md` spiega come creare tunnel, hostname
       wildcard, applicazione Access, policy e service token nella
       dashboard Cloudflare. Ricorda il limite di 100 MB per richiesta del
       piano gratuito (upload di documenti e file).
-- [ ] Spariscono `local_certs`, `ron1n.home` e la pagina `ca.ron1n.home`
+- [x] Spariscono `local_certs`, `ron1n.home` e la pagina `ca.ron1n.home`
       (SETUP-006); riferimenti, README e la pagina `ios` usano i nomi
       nuovi.
 

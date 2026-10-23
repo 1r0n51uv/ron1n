@@ -1,42 +1,49 @@
-# Nomi interni, raggiungibili via Tailscale. TLS interno di Caddy finché
-# non c'è un dominio vero.
+# Siti su *.DOMINIO (ron1n.space), dal Cloudflare Tunnel e dietro Cloudflare
+# Access: HTTPS e login li fa Cloudflare, qui solo HTTP sulla rete proxy.
+# Spec SETUP-008.
 {
-	local_certs
+	auto_https off
+	servers {
+		# Le richieste arrivano da cloudflared: si tengono i suoi
+		# X-Forwarded-*, così i backend vedono https e l'IP del client.
+		trusted_proxies static private_ranges
+		client_ip_headers Cf-Connecting-Ip X-Forwarded-For
+	}
 }
 
-# Certificato radice di Caddy, da installare sui client (iPhone compreso)
-# perché i siti *.ron1n.home siano attendibili. In HTTP, perché prima di
-# installarlo l'HTTPS dà errore; anche in HTTPS, perché Safari passa da solo
-# a https: lì si accetta l'avviso e si scarica. Solo tailnet. Spec SETUP-006.
-ca.ron1n.home, http://ca.ron1n.home {
-	root * /data/caddy/pki/authorities/local
-	rewrite * /root.crt
-	# Con questo tipo Safari su iOS propone di installare il profilo.
-	header Content-Type application/x-x509-ca-cert
-	file_server
-}
+http://*.{$DOMINIO} {
+	# Dashboard ron1nOS (stack ron1nos): SPA e API /api/v1.
+	@home host home.{$DOMINIO}
+	handle @home {
+		reverse_proxy ron1nos:8080
+	}
 
-# Dashboard ron1nOS (stack ron1nos): SPA e API /api/v1. Solo tailnet.
-ron1n.home {
-	reverse_proxy ron1nos:8080
-}
+	@status host status.{$DOMINIO}
+	handle @status {
+		reverse_proxy uptime-kuma:3001
+	}
 
-status.ron1n.home {
-	reverse_proxy uptime-kuma:3001
-}
+	# Web UI e Web API di qBittorrent (stack torrent).
+	@torrent host torrent.{$DOMINIO}
+	handle @torrent {
+		reverse_proxy qbittorrent:8080
+	}
 
-# Web UI e Web API di qBittorrent (stack torrent). Solo tailnet.
-torrent.ron1n.home {
-	reverse_proxy qbittorrent:8080
-}
+	# Interfaccia web di Glances (stack glances, rete dell'host).
+	@glances host glances.{$DOMINIO}
+	handle @glances {
+		reverse_proxy host.docker.internal:61208
+	}
 
-# Interfaccia web di Glances (stack glances, rete dell'host). Solo tailnet.
-glances.ron1n.home {
-	reverse_proxy host.docker.internal:61208
-}
+	# IPA delle app iOS compilate sul server (stack ios), da aprire con
+	# SideStore. Spec IOSB-002.
+	@ios host ios.{$DOMINIO}
+	handle @ios {
+		reverse_proxy ios-builds:80
+	}
 
-# IPA delle app iOS compilate sul server (stack ios), da aprire con
-# SideStore. Solo tailnet. Spec IOSB-002.
-ios.ron1n.home {
-	reverse_proxy ios-builds:80
+	# Un nome che non è di nessun servizio.
+	handle {
+		respond "Sito sconosciuto" 404
+	}
 }

@@ -14,7 +14,7 @@ INFRA=$ROOT/infra
 # Ordine di avvio: Postgres prima di ron1nOS, Caddy per ultimo, così un
 # servizio è raggiungibile solo quando c'è. Lo spegnimento va al contrario.
 # Gli stack nuovi, non ancora qui, partono dopo questi in ordine alfabetico.
-ORDER="postgres torrent glances ron1nos monitoring updates proxy"
+ORDER="postgres torrent glances ron1nos monitoring updates proxy tunnel"
 # Stack da aspettare finché il healthcheck è verde prima di passare al
 # successivo.
 WAIT="postgres"
@@ -175,6 +175,9 @@ make_envs() {
 
   env_create "$INFRA/ios" "PUID=$OWNER_UID" "PGID=$OWNER_GID"
 
+  env_create "$INFRA/proxy"
+  env_create "$INFRA/tunnel"
+
   if [ -f "$INFRA/ron1nos/compose.yaml" ] && [ ! -f "$INFRA/ron1nos/.env" ]; then
     if [ ! -f "$INFRA/postgres/.env" ] || [ ! -f "$INFRA/torrent/.env" ]; then
       die "per creare ron1nos/.env servono postgres/.env e torrent/.env"
@@ -254,6 +257,11 @@ cmd_up() {
     dir=$INFRA/$s
     if [ -f "$dir/.env.example" ] && [ ! -f "$dir/.env" ]; then
       info "$s: manca .env, non lo avvio (copia .env.example in .env, adattalo e rilancia)"
+      continue
+    fi
+    # Il tunnel senza token non si collega (SETUP-008).
+    if [ "$s" = tunnel ] && [ -z "$(env_get "$dir/.env" TUNNEL_TOKEN)" ]; then
+      info "tunnel: manca TUNNEL_TOKEN in infra/tunnel/.env, non lo avvio (docs/server-setup.md)"
       continue
     fi
     info "$s"

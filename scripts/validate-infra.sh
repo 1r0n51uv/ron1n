@@ -17,6 +17,8 @@ for compose in infra/*/compose.yaml; do
   sed -i 's/<app>/esempio/g' "$work/compose.yaml"
   # env_file: .env non è versionato: al suo posto .env.example, o un file vuoto.
   if [[ -f "$work/.env.example" ]]; then cp "$work/.env.example" "$work/.env"; else touch "$work/.env"; fi
+  # I token obbligatori sono vuoti nell'esempio: uno finto per la verifica.
+  sed -i 's/^\(TUNNEL_TOKEN\)=$/\1=finto/' "$work/.env"
   if docker compose --project-directory "$work" -f "$work/compose.yaml" config --quiet; then
     echo "ok   $compose"
   else
@@ -26,7 +28,8 @@ for compose in infra/*/compose.yaml; do
 done
 
 if command -v caddy >/dev/null; then
-  caddy validate --adapter caddyfile --config infra/proxy/Caddyfile
+  DOMINIO=$(sed -n 's/^DOMINIO=//p' infra/proxy/.env.example) \
+    caddy validate --adapter caddyfile --config infra/proxy/Caddyfile
   # Il Caddyfile segue il formato di `caddy fmt`.
   if ! caddy fmt infra/proxy/Caddyfile | diff -u infra/proxy/Caddyfile -; then
     echo "FAIL infra/proxy/Caddyfile: esegui caddy fmt --overwrite"

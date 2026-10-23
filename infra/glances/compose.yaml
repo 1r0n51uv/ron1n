@@ -2,7 +2,7 @@
 # server, esposti con la sua API REST. Gira nella rete e nei processi
 # dell'host, altrimenti vedrebbe solo sé stesso. Per questo non può stare
 # sulla rete proxy: ascolta solo sull'IP del bridge docker0 (172.17.0.1),
-# raggiungibile dai container ma non dalla LAN né dalla tailnet.
+# raggiungibile dai container ma non dalla LAN.
 name: glances
 
 services:

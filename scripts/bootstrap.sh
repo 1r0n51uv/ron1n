@@ -425,7 +425,7 @@ ask_stack_env() {
       ron1nos:QBT_USERNAME | ron1nos:QBT_PASSWORD)
         val=$(env_get "$INFRA_DIR/torrent/.env" "$key")
         ;;
-      ios:GITHUB_TOKEN)
+      ios:GITHUB_TOKEN | tunnel:TUNNEL_TOKEN)
         env_help "$tmp" "$key" >/dev/tty
         ask_secret "$key (invio = vuoto)"
         val=$REPLY
@@ -502,40 +502,18 @@ start_stacks() {
 summary() {
   step "Fatto"
   proxy=$RON1N_DIR/infra/proxy
-  hosts=$(sed -n 's/^\([a-z0-9.-]*\.home\) {$/\1/p' "$proxy/Caddyfile" | tr '\n' ' ')
-  ts_ip=$(tailscale ip -4 2>/dev/null || echo '<ip-tailscale>')
-
-  # Certificato radice di Caddy (local_certs), da installare sui client.
-  ca="$ADMIN_HOME/ron1n-caddy-root.crt"
-  i=0
-  while [ $i -lt 15 ]; do
-    if compose "$proxy" exec -T caddy \
-      cat /data/caddy/pki/authorities/local/root.crt >"$ca.tmp" 2>/dev/null && [ -s "$ca.tmp" ]; then
-      mv "$ca.tmp" "$ca"
-      chown "$ADMIN_UID:$ADMIN_GID" "$ca"
-      break
-    fi
-    i=$((i + 1))
-    sleep 2
-  done
-  rm -f "$ca.tmp"
+  dominio=$(env_get "$proxy/.env" DOMINIO)
+  # I nomi dei siti dai matcher del Caddyfile (@nome host ...).
+  hosts=$(sed -n 's/^[[:space:]]*@[a-z]* host \(.*\)$/\1/p' "$proxy/Caddyfile" |
+    sed "s/{\$DOMINIO}/$dominio/g" | tr '\n' ' ')
 
   echo
-  echo "  Server nella tailnet: $ts_ip"
-  echo
-  echo "  Nomi *.ron1n.home per tutti i client, telefono compreso (una volta sola):"
-  echo "    console Tailscale, DNS > Add nameserver > Custom: $ts_ip"
-  echo "    con \"Restrict to domain\" (split DNS) su ron1n.home"
-  echo
-  if [ -f "$ca" ]; then
-    echo "  Certificato radice di Caddy, da installare come autorità attendibile sui"
-    echo "  client: http://ca.ron1n.home dal client, oppure $ca"
-    echo "  (scp $ADMIN@$ts_ip:ron1n-caddy-root.crt .). Passi in docs/server-setup.md."
-  else
-    echo "  Il certificato radice di Caddy non è ancora pronto: rilancia lo script tra poco."
+  if [ -z "$(env_get "$RON1N_DIR/infra/tunnel/.env" TUNNEL_TOKEN)" ]; then
+    echo "  Manca TUNNEL_TOKEN in infra/tunnel/.env: senza, i siti non si aprono."
+    echo "  Passi in docs/server-setup.md (Accesso da fuori con Cloudflare)."
+    echo
   fi
-  echo
-  echo "  Indirizzi, dalla tailnet:"
+  echo "  Indirizzi, dietro Cloudflare Access:"
   for h in $hosts; do echo "    https://$h"; done
   echo
   echo "  Configurazione, nei .env degli stack (leggibili solo da $ADMIN e root):"
@@ -549,7 +527,7 @@ summary() {
   if grep -q '^AUTH_PASSWORD_HASH=' "$RON1N_DIR/infra/ron1nos/.env" 2>/dev/null; then
     echo "    ron1nOS      la password scelta"
   else
-    echo "    ron1nOS      login spento: aperta a chi è nella tailnet"
+    echo "    ron1nOS      login spento: protetta solo da Cloudflare Access"
   fi
   if [ "${DOCUMENTS_KEY_NEW:-0}" = 1 ]; then
     echo
