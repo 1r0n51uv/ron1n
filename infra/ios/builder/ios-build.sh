@@ -22,6 +22,13 @@ die() {
   exit 1
 }
 
+# Swift prende la home da /etc/passwd, non da HOME: se le due non
+# coincidono l'SDK finirebbe fuori da /work e sparirebbe con il container.
+passwd_home=$(getent passwd "$(id -u)" | cut -d: -f6) || passwd_home=
+if [ -n "$passwd_home" ] && [ "$passwd_home" != "$HOME" ]; then
+  die "l'utente $(id -u) ha la home in $passwd_home, non in $HOME: usa PUID=1000 o ricostruisci l'immagine"
+fi
+
 usage() {
   cat <<'USAGE'
 Uso: ios-builder <comando>
