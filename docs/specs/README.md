@@ -10,6 +10,7 @@ in [`flusso-sviluppo.md`](../flusso-sviluppo.md).
 | ---------------- | ---------------------------------- | ----------- | ------------------ |
 | Infra            | [infra.md](infra.md)               | `INFRA`     | `mod:infra`        |
 | Setup del server | [server-setup.md](server-setup.md) | `SETUP`     | `mod:server-setup` |
+| Build iOS        | [ios-build.md](ios-build.md)       | `IOSB`      | `mod:ios-build`    |
 
 ## Stati dei requisiti
 
