@@ -173,6 +173,8 @@ make_envs() {
     "PUID=$OWNER_UID" "PGID=$OWNER_GID" \
     "QBT_PASSWORD=$(rand)"
 
+  env_create "$INFRA/ios" "PUID=$OWNER_UID" "PGID=$OWNER_GID"
+
   if [ -f "$INFRA/ron1nos/compose.yaml" ] && [ ! -f "$INFRA/ron1nos/.env" ]; then
     if [ ! -f "$INFRA/postgres/.env" ] || [ ! -f "$INFRA/torrent/.env" ]; then
       die "per creare ron1nos/.env servono postgres/.env e torrent/.env"
@@ -196,16 +198,28 @@ make_envs() {
   fi
 }
 
-# Cartella dei download di qBittorrent, di proprietà dell'utente degli stack.
-make_downloads_dir() {
-  [ -f "$INFRA/torrent/.env" ] || return 0
-  dl=$(env_get "$INFRA/torrent/.env" DOWNLOADS_DIR)
-  dl=${dl:-/srv/downloads}
-  [ -d "$dl" ] && return 0
-  mkdir -p "$dl" 2>/dev/null ||
-    die "non posso creare $dl: rilancia con sudo, oppure sudo mkdir -p $dl && sudo chown $OWNER_UID:$OWNER_GID $dl"
-  [ "$(id -u)" -ne 0 ] || chown "$OWNER_UID:$OWNER_GID" "$dl"
-  info "$dl creata"
+# Cartella $1 dell'host, di proprietà dell'utente degli stack.
+make_owned_dir() {
+  [ -d "$1" ] && return 0
+  mkdir -p "$1" 2>/dev/null ||
+    die "non posso creare $1: rilancia con sudo, oppure sudo mkdir -p $1 && sudo chown $OWNER_UID:$OWNER_GID $1"
+  [ "$(id -u)" -ne 0 ] || chown "$OWNER_UID:$OWNER_GID" "$1"
+  info "$1 creata"
+}
+
+# Cartelle dell'host usate dagli stack: download di qBittorrent, SDK e IPA
+# del builder iOS.
+make_dirs() {
+  if [ -f "$INFRA/torrent/.env" ]; then
+    dl=$(env_get "$INFRA/torrent/.env" DOWNLOADS_DIR)
+    make_owned_dir "${dl:-/srv/downloads}"
+  fi
+  if [ -f "$INFRA/ios/.env" ]; then
+    ios=$(env_get "$INFRA/ios/.env" IOS_DIR)
+    ios=${ios:-/srv/ron1n-ios}
+    make_owned_dir "$ios"
+    make_owned_dir "$ios/builds"
+  fi
 }
 
 check_docker() {
@@ -232,7 +246,7 @@ cmd_up() {
   step "Preparazione"
   make_networks
   make_envs
-  make_downloads_dir
+  make_dirs
 
   step "Avvio"
   started=

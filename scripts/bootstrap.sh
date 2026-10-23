@@ -396,6 +396,11 @@ ask_stack_env() {
       ron1nos:QBT_USERNAME | ron1nos:QBT_PASSWORD)
         val=$(env_get "$INFRA_DIR/torrent/.env" "$key")
         ;;
+      ios:GITHUB_TOKEN)
+        env_help "$tmp" "$key" >/dev/tty
+        ask_secret "$key (invio = vuoto)"
+        val=$REPLY
+        ;;
       ron1nos:DATABASE_URL)
         val="postgres://ron1nos:$(env_get "$INFRA_DIR/postgres/.env" RON1NOS_DB_PASSWORD)@postgres:5432/ron1nos"
         ;;

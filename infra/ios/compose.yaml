@@ -1,0 +1,33 @@
+# App iOS compilate sul server con xtool, senza Mac (spec IOSB). Il builder
+# si lancia a mano (README); la pagina con le IPA resta accesa per
+# scaricarle dal telefono e aprirle con SideStore.
+name: ios
+
+services:
+  # Pagina https://ios.ron1n.home: le IPA di IOS_DIR/builds, in sola
+  # lettura, con l'elenco dei file. Solo tailnet, via Caddy. IOSB-002.
+  ios-builds:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    command: ["caddy", "file-server", "--root", "/srv", "--browse", "--listen", ":80"]
+    volumes:
+      - ${IOS_DIR:-/srv/ron1n-ios}/builds:/srv:ro
+    networks:
+      - proxy
+
+  # Swift e xtool: docker compose run --rm ios-builder sdk | build [ref].
+  # Con il profilo build non parte con ./infra.sh up. IOSB-001.
+  ios-builder:
+    image: ron1n/ios-builder:xtool-1.22.2
+    build: ./builder
+    profiles: ["build"]
+    user: "${PUID:-1000}:${PGID:-1000}"
+    environment:
+      IOS_REPO: ${IOS_REPO:?manca IOS_REPO in infra/ios/.env}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+    volumes:
+      - ${IOS_DIR:-/srv/ron1n-ios}:/work
+
+networks:
+  proxy:
+    external: true

@@ -34,3 +34,9 @@ torrent.ron1n.home {
 glances.ron1n.home {
 	reverse_proxy host.docker.internal:61208
 }
+
+# IPA delle app iOS compilate sul server (stack ios), da aprire con
+# SideStore. Solo tailnet. Spec IOSB-002.
+ios.ron1n.home {
+	reverse_proxy ios-builds:80
+}

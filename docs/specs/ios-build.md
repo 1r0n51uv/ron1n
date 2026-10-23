@@ -17,47 +17,47 @@ l'SDK su Linux è una scelta del proprietario, fatta sapendolo.
 
 ### IOSB-001 · Builder xtool sul server
 
-Stato: proposto
+Stato: fatto (#38)
 
 Un comando sul server trasforma un commit del repo di un'app iOS in una
 IPA non firmata.
 
 Accettazione:
 
-- [ ] Lo stack `ios` ha un servizio `ios-builder`, costruito in locale da
+- [x] Lo stack `ios` ha un servizio `ios-builder`, costruito in locale da
       un Dockerfile con Swift e xtool a versioni fisse. Non parte con
       `./infra.sh up`: si lancia a mano con `docker compose run`.
-- [ ] Tutto quello che pesa (Xcode.xip, SDK, sorgenti, IPA) sta nella
+- [x] Tutto quello che pesa (Xcode.xip, SDK, sorgenti, IPA) sta nella
       cartella `IOS_DIR` dell'host, `/srv/ron1n-ios` di default: fuori da
       `/var`, che ha poco spazio. I file sono dell'utente degli stack.
-- [ ] `sdk` installa l'SDK iOS dall'unico `.xip` in `IOS_DIR`, una volta
+- [x] `sdk` installa l'SDK iOS dall'unico `.xip` in `IOS_DIR`, una volta
       sola; dopo, il `.xip` si può cancellare.
-- [ ] `build [ref]` clona il repo `IOS_REPO` al ref dato (default `main`),
+- [x] `build [ref]` clona il repo `IOS_REPO` al ref dato (default `main`),
       compila in release e mette l'IPA in `IOS_DIR/builds` con nome
       `<app>-<commit>.ipa`, più una copia `<app>.ipa` sempre uguale
       all'ultima. Delle build vecchie restano le ultime 5.
-- [ ] Un repo privato si clona con `GITHUB_TOKEN` (token fine-grained,
+- [x] Un repo privato si clona con `GITHUB_TOKEN` (token fine-grained,
       solo lettura dei contenuti), che non finisce nella configurazione
       git dei sorgenti clonati. Vuoto per un repo pubblico.
-- [ ] Senza SDK, senza `.xip` o con un errore di compilazione si ferma con
+- [x] Senza SDK, senza `.xip` o con un errore di compilazione si ferma con
       un messaggio che dice cosa fare.
 
 ### IOSB-002 · Pagina di download su `ios.ron1n.home`
 
-Stato: proposto
+Stato: fatto (#38)
 
 Dal telefono, nella tailnet, si scarica l'ultima IPA e la si apre con
 SideStore.
 
 Accettazione:
 
-- [ ] Lo stack `ios` ha un servizio `ios-builds` che pubblica
+- [x] Lo stack `ios` ha un servizio `ios-builds` che pubblica
       `IOS_DIR/builds` in sola lettura, con l'elenco dei file; Caddy lo
       espone su `https://ios.ron1n.home`, solo tailnet.
-- [ ] `./infra.sh up` crea `infra/ios/.env` e la cartella delle build, e
+- [x] `./infra.sh up` crea `infra/ios/.env` e la cartella delle build, e
       avvia la pagina anche prima della prima build.
-- [ ] Il bootstrap chiede `IOS_DIR`, `IOS_REPO` e `GITHUB_TOKEN`, il token
+- [x] Il bootstrap chiede `IOS_DIR`, `IOS_REPO` e `GITHUB_TOKEN`, il token
       senza mostrarlo. Il cleanup ha una voce che cancella `IOS_DIR` (SDK e
       build) e toglie l'immagine del builder insieme alle altre.
-- [ ] `infra/ios/README.md` spiega come scaricare `Xcode.xip`, installare
+- [x] `infra/ios/README.md` spiega come scaricare `Xcode.xip`, installare
       l'SDK, fare una build e installarla con SideStore.
