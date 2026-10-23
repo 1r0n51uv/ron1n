@@ -6,11 +6,11 @@ girano. Ogni app vive nel suo repo.
 
 ## Progetti
 
-| Progetto    | Cosa è                                                                                    | Repo                                                    | Stato                                   |
-| ----------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------- | --------------------------------------- |
-| ron1nOS     | Dashboard dell'homelab: pasti, allenamenti, peso, casa, server, container, download, note | [1r0n51uv/ron1nOS](https://github.com/1r0n51uv/ron1nOS) | Download, Server e Nutrizione collegati |
-| ron1nOS iOS | Versione iOS della dashboard                                                              | _da creare_                                             | design pronto                           |
-| 1r0-pkm     | App iOS/Watch per palestra e dieta, API Fastify + Postgres                                | [1r0n51uv/1r0-pkm](https://github.com/1r0n51uv/1r0-pkm) | deprecata, sola lettura                 |
+| Progetto    | Cosa è                                                                                    | Repo                                                            | Stato                                     |
+| ----------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------- | ----------------------------------------- |
+| ron1nOS     | Dashboard dell'homelab: pasti, allenamenti, peso, casa, server, container, download, note | [1r0n51uv/ron1nOS](https://github.com/1r0n51uv/ron1nOS)         | Download, Server e Nutrizione collegati   |
+| ron1nOS iOS | Versione iOS della dashboard                                                              | [1r0n51uv/ron1nos-ios](https://github.com/1r0n51uv/ron1nos-ios) | app di prova sul telefono, via Cloudflare |
+| 1r0-pkm     | App iOS/Watch per palestra e dieta, API Fastify + Postgres                                | [1r0n51uv/1r0-pkm](https://github.com/1r0n51uv/1r0-pkm)         | deprecata, sola lettura                   |
 
 ## Identità
 
