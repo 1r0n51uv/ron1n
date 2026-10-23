@@ -172,41 +172,65 @@ Accettazione:
       di un server già installato, con il modo per tornare indietro.
 - [x] Il cleanup lascia i bind mount, come lascia Docker Engine.
 
-### SETUP-008 · Certificati pubblici per i nomi privati
+### SETUP-008 · Accesso da fuori con Cloudflare Tunnel e Access
 
 Stato: da fare
 
-I siti della tailnet hanno certificati Let's Encrypt, validi su ogni
-client senza installare niente: niente più CA di Caddy da rendere
-attendibile, che le app iOS rifiutano comunque (TLS -9802) anche quando
-Safari la accetta. Il dominio è `ron1n.space`, registrato su Namecheap con
-i DNS su Cloudflare; i nomi privati stanno sotto `home.ron1n.space`, il
-resto del dominio resta per i siti pubblici del Tunnel.
+I siti del server si aprono da ogni client, dentro e fuori casa, senza VPN
+né certificati da installare: li pubblica un Cloudflare Tunnel su
+`ron1n.space` (registrato su Namecheap, DNS su Cloudflare) e li protegge
+Cloudflare Access. Toglie di mezzo la CA di Caddy, che le app iOS
+rifiutano (TLS -9802) anche quando Safari la accetta, e la VPN, che su
+iPhone è in conflitto con quella di SideStore.
 
 Accettazione:
 
-- [ ] I siti passano da `*.ron1n.home` a `*.home.ron1n.space`: la
-      dashboard su `home.ron1n.space`, poi `status.`, `torrent.`,
-      `glances.` e `ios.` sotto `home.ron1n.space`. Il dominio sta in
-      `DOMINIO` (default `home.ron1n.space`) nei `.env` di `proxy` e `dns`,
-      non scritto a mano nei file.
-- [ ] Caddy ha un'immagine costruita in locale, a versione fissa, con il
-      plugin `caddy-dns/cloudflare`, e prende un solo certificato wildcard
-      `*.home.ron1n.space` più `home.ron1n.space` con la verifica DNS-01:
-      i nomi dei servizi non finiscono nei registri pubblici dei
-      certificati. Il token Cloudflare (`CF_API_TOKEN`, permesso solo
-      "Zone · DNS · Edit" su `ron1n.space`) sta in `infra/proxy/.env`, e il
-      bootstrap lo chiede senza mostrarlo.
-- [ ] Su internet `home.ron1n.space` non ha record, a parte il TXT
-      temporaneo della verifica, che scrive e toglie Caddy. I nomi li
-      risolve solo lo stack `dns` (SETUP-005), che passa alla zona
-      `DOMINIO` con l'IP Tailscale; lo split DNS nella console Tailscale
-      va su `home.ron1n.space`.
-- [ ] Spariscono `local_certs`, la zona `ron1n.home` e la pagina
-      `ca.ron1n.home` (SETUP-006): sul telefono il profilo di Caddy si può
-      togliere. Riferimenti, README, bootstrap (riepilogo finale e split
-      DNS) e la pagina `ios` usano i nomi nuovi.
-- [ ] Caddy pubblica anche la `443/udp`, visto che annuncia HTTP/3.
-- [ ] `docs/server-setup.md` spiega come spostare i nameserver da
-      Namecheap a Cloudflare, creare il token e cambiare lo split DNS; il
-      cleanup toglie l'immagine di Caddy costruita in locale con le altre.
+- [ ] Uno stack `tunnel` con `cloudflared` a versione fissa, in rete
+      `proxy`, lancia il tunnel con `TUNNEL_TOKEN` in
+      `infra/tunnel/.env` (il bootstrap lo chiede senza mostrarlo; senza,
+      lo stack non parte). Connessione solo in uscita: il router non si
+      tocca.
+- [ ] Il tunnel ha un solo hostname pubblico, `*.ron1n.space` →
+      `http://caddy:80`, più il record DNS wildcard: è Caddy a smistare
+      per nome, nel Caddyfile versionato. Un solo livello di sottodominio,
+      perché il certificato gratuito di Cloudflare copre `*.ron1n.space` e
+      non `*.home.ron1n.space`.
+- [ ] I nomi: `home.ron1n.space` per la dashboard, poi `status.`,
+      `torrent.`, `glances.` e `ios.ron1n.space`. Il dominio sta in
+      `DOMINIO` (default `ron1n.space`) in `infra/proxy/.env`, non scritto
+      a mano nei file.
+- [ ] Caddy serve solo HTTP sulla rete `proxy`, niente certificati né
+      porte pubblicate sull'host: HTTPS lo fa Cloudflare. Si fida di
+      `X-Forwarded-*` dal tunnel (`trusted_proxies`), così i backend vedono
+      `https` e l'IP vero del client. Un nome che non è di nessun servizio
+      riceve un errore.
+- [ ] Cloudflare Access protegge `*.ron1n.space`: dal browser si entra con
+      un codice via mail all'indirizzo del proprietario; l'app iOS con un
+      service token (header `CF-Access-Client-Id` e
+      `CF-Access-Client-Secret`). Nessun nome passa dal tunnel senza
+      Access, Glances e qBittorrent compresi, che non hanno login.
+- [ ] `docs/server-setup.md` spiega come creare tunnel, hostname
+      wildcard, applicazione Access, policy e service token nella
+      dashboard Cloudflare. Ricorda il limite di 100 MB per richiesta del
+      piano gratuito (upload di documenti e file).
+- [ ] Spariscono `local_certs`, `ron1n.home` e la pagina `ca.ron1n.home`
+      (SETUP-006); riferimenti, README e la pagina `ios` usano i nomi
+      nuovi.
+
+### SETUP-009 · Via Tailscale
+
+Stato: da fare
+
+Dopo SETUP-008, provato dal telefono fuori casa, Tailscale non serve più.
+
+Accettazione:
+
+- [ ] Il bootstrap non installa più Tailscale e non apre la sua
+      interfaccia nel firewall; il cleanup sa ancora toglierlo da un server
+      che lo ha.
+- [ ] Lo stack `dns` (SETUP-005) sparisce, con `TS_IP` e lo split DNS:
+      i nomi li risolve il DNS pubblico di Cloudflare.
+- [ ] SSH resta solo dalla LAN, con chiave. Da fuori casa niente SSH
+      finché non serve (eventualmente con Cloudflare Access per SSH).
+- [ ] `CLAUDE.md`, README e `docs/server-setup.md` dicono che l'accesso
+      privato passa da Cloudflare Tunnel con Access.
