@@ -34,8 +34,3 @@ torrent.ron1n.home {
 glances.ron1n.home {
 	reverse_proxy host.docker.internal:61208
 }
-
-# Desktop Linux nel browser (stack webtop). Solo tailnet.
-desktop.ron1n.home {
-	reverse_proxy webtop:3000
-}

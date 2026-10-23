@@ -85,11 +85,11 @@ check "status: stack spenti" grep -q "postgres     spento" "$tmp/out"
 run up
 check "up: termina senza errori" true
 check "up: reti proxy e db create" sh -c "grep -q 'network create proxy' '$LOG' && grep -q 'network create db' '$LOG'"
-check "up: ordine di avvio" test "$(order up)" = "postgres torrent glances webtop ron1nos monitoring updates proxy dns zzz-libero "
+check "up: ordine di avvio" test "$(order up)" = "postgres torrent glances ron1nos monitoring updates proxy dns zzz-libero "
 check "up: aspetta Postgres sano" grep -q "^postgres compose up .*--wait" "$LOG"
 check "up: niente template" sh -c "! grep -q '^_app-template' '$LOG'"
 check "up: stack senza regole né .env non avviato" grep -q "aaa-nuovo: manca .env" "$tmp/out"
-for s in postgres torrent webtop ron1nos; do
+for s in postgres torrent ron1nos; do
   check "up: $s/.env con permessi 600" test "$(stat -c %a "$repo/infra/$s/.env")" = 600
 done
 check "up: niente password d'esempio" sh -c "! grep -q -E 'PASSWORD=(cambiami.*|admin)$' '$repo'/infra/*/.env"
@@ -120,7 +120,7 @@ UP="postgres torrent ron1nos proxy zzz-libero"
 run down
 check "down: ordine inverso" test "$(order down)" = "zzz-libero proxy ron1nos torrent postgres "
 check "down: conserva i volumi" sh -c "! grep -q 'down.*-v' '$LOG'"
-check "down: stack spento non è un errore" grep -q "webtop: già spento" "$tmp/out"
+check "down: stack spento non è un errore" grep -q "glances: già spento" "$tmp/out"
 check "down: .env conservati" test -f "$repo/infra/postgres/.env"
 run down ron1nos
 check "down con nomi: solo quelli" test "$(order down)" = "ron1nos "

@@ -13,7 +13,6 @@ Uno stack Docker Compose per cartella. Sul server il repo è clonato in
 | `glances`    | Glances, risorse del server per il modulo Server di ron1nOS ([README](glances/README.md))      |
 | `postgres`   | Postgres condiviso dalle app ([README](postgres/README.md))                                    |
 | `ron1nos`    | Dashboard ron1nOS su `ron1n.home` ([README](ron1nos/README.md))                                |
-| `webtop`     | Desktop Linux (Debian + XFCE) nel browser su `desktop.ron1n.home` ([README](webtop/README.md)) |
 
 ## Avvio e spegnimento
 
