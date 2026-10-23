@@ -4,6 +4,17 @@
 	local_certs
 }
 
+# Certificato radice di Caddy, da installare sui client (iPhone compreso)
+# perché i siti *.ron1n.home siano attendibili. In HTTP, perché prima di
+# installarlo l'HTTPS dà errore. Solo tailnet. Spec SETUP-006.
+http://ca.ron1n.home {
+	root * /data/caddy/pki/authorities/local
+	rewrite * /root.crt
+	# Con questo tipo Safari su iOS propone di installare il profilo.
+	header Content-Type application/x-x509-ca-cert
+	file_server
+}
+
 # Dashboard ron1nOS (stack ron1nos): SPA e API /api/v1. Solo tailnet.
 ron1n.home {
 	reverse_proxy ron1nos:8080

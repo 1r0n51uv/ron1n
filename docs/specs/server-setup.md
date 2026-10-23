@@ -104,3 +104,43 @@ Accettazione:
       Caddy). Per toglierli spegne gli stack, ma lascia i `.env`.
 - [x] Se si cancellano i `.env` ma non i volumi, il riepilogo avverte che
       Postgres tiene le password vecchie.
+
+### SETUP-005 · Nomi `*.ron1n.home` su tutti i client
+
+Stato: in corso (#28)
+
+Telefono, tablet e computer della tailnet aprono i siti `*.ron1n.home`
+senza toccare il file hosts, che su iOS non si può modificare.
+
+Accettazione:
+
+- [x] Lo stack `dns` (CoreDNS) risponde a ogni nome `*.ron1n.home`, e a
+      `ron1n.home`, con l'IP Tailscale del server. Altri tipi (IPv6,
+      HTTPS…) hanno una risposta vuota; le altre zone non le risolve.
+- [x] Risponde solo alla tailnet: dalla LAN e da internet la porta 53 è
+      chiusa dal firewall, come le altre porte dei container.
+- [x] L'IP sta in `TS_IP` di `infra/dns/.env`: lo scrivono il bootstrap e
+      `./infra.sh up` da `tailscale ip -4`. Senza Tailscale niente `.env`
+      e lo stack non parte.
+- [x] Il bootstrap, alla fine, spiega come attivare lo split DNS nella
+      console Tailscale (nameserver = IP del server, solo `ron1n.home`) al
+      posto della riga per il file hosts.
+- [x] `docs/server-setup.md` ha i passi per iPhone, Mac e PC.
+
+### SETUP-006 · Certificato di Caddy scaricabile dai client
+
+Stato: in corso (#29)
+
+Il certificato radice di Caddy si installa da un client senza `scp`,
+anche da iPhone.
+
+Accettazione:
+
+- [x] `http://ca.ron1n.home` (in HTTP, solo tailnet) scarica il
+      certificato radice di Caddy con il tipo
+      `application/x-x509-ca-cert`, così Safari su iOS propone di
+      installarlo come profilo.
+- [x] Qualsiasi percorso dà il certificato: la chiave privata della CA non
+      è mai raggiungibile.
+- [x] `docs/server-setup.md` spiega come installarlo e renderlo
+      attendibile su iPhone, macOS e Windows.

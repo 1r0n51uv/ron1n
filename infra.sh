@@ -163,7 +163,7 @@ env_create() {
 
 # Genera i .env mancanti degli stack noti, con i valori condivisi coerenti:
 # password di ron1nos in Postgres = DATABASE_URL, credenziali qBittorrent
-# uguali in torrent e ron1nos.
+# uguali in torrent e ron1nos, IP Tailscale del server per il DNS.
 make_envs() {
   env_create "$INFRA/postgres" \
     "POSTGRES_PASSWORD=$(rand)" \
@@ -188,6 +188,15 @@ make_envs() {
       "QBT_USERNAME=$qbt_user" \
       "QBT_PASSWORD=$qbt_pw" \
       "DATABASE_URL=postgres://ron1nos:$db_pw@postgres:5432/ron1nos"
+  fi
+
+  if [ -f "$INFRA/dns/compose.yaml" ] && [ ! -f "$INFRA/dns/.env" ]; then
+    ts_ip=$(tailscale ip -4 2>/dev/null | head -n 1) || ts_ip=
+    if [ -n "$ts_ip" ]; then
+      env_create "$INFRA/dns" "TS_IP=$ts_ip"
+    else
+      info "dns: Tailscale non risponde, niente .env (scrivi TS_IP in infra/dns/.env)"
+    fi
   fi
 }
 

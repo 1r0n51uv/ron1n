@@ -51,6 +51,9 @@ case "$1 ${2:-}" in
 esac
 FAKE
 chmod +x "$bin/docker"
+# tailscale finto: l'IP del server nella tailnet.
+printf '#!/bin/sh\necho 100.64.0.7\n' >"$bin/tailscale"
+chmod +x "$bin/tailscale"
 export LOG="$tmp/log" STATE="$tmp" UP=""
 PATH="$bin:$PATH"
 export PATH
@@ -82,7 +85,7 @@ check "status: stack spenti" grep -q "postgres     spento" "$tmp/out"
 run up
 check "up: termina senza errori" true
 check "up: reti proxy e db create" sh -c "grep -q 'network create proxy' '$LOG' && grep -q 'network create db' '$LOG'"
-check "up: ordine di avvio" test "$(order up)" = "postgres torrent glances webtop ron1nos monitoring updates proxy zzz-libero "
+check "up: ordine di avvio" test "$(order up)" = "postgres torrent glances webtop ron1nos monitoring updates proxy dns zzz-libero "
 check "up: aspetta Postgres sano" grep -q "^postgres compose up .*--wait" "$LOG"
 check "up: niente template" sh -c "! grep -q '^_app-template' '$LOG'"
 check "up: stack senza regole né .env non avviato" grep -q "aaa-nuovo: manca .env" "$tmp/out"
@@ -95,6 +98,7 @@ check "up: DATABASE_URL usa la password di Postgres" \
   test "$(envval ron1nos DATABASE_URL)" = "postgres://ron1nos:$db_pw@postgres:5432/ron1nos"
 check "up: stesse credenziali qBittorrent" test "$(envval ron1nos QBT_PASSWORD)" = "$(envval torrent QBT_PASSWORD)"
 check "up: stesso utente qBittorrent" test "$(envval ron1nos QBT_USERNAME)" = "$(envval torrent QBT_USERNAME)"
+check "up: DNS con l'IP Tailscale" test "$(envval dns TS_IP)" = 100.64.0.7
 check "up: PUID dell'utente" test "$(envval torrent PUID)" = "$owner"
 check "up: cartella dei download creata" test -d "$tmp/downloads"
 check "up: dice dove sono le password" grep -q "Password generate" "$tmp/out"
@@ -120,6 +124,13 @@ check "down: stack spento non è un errore" grep -q "webtop: già spento" "$tmp/
 check "down: .env conservati" test -f "$repo/infra/postgres/.env"
 run down ron1nos
 check "down con nomi: solo quelli" test "$(order down)" = "ron1nos "
+
+# Senza Tailscale il DNS non ha .env e non parte.
+rm -f "$repo/infra/dns/.env" "$bin/tailscale"
+run up dns
+check "up senza Tailscale: niente .env del DNS" test ! -f "$repo/infra/dns/.env"
+check "up senza Tailscale: lo dice" grep -q "dns: Tailscale non risponde" "$tmp/out"
+check "up senza Tailscale: DNS non avviato" test -z "$(order up)"
 
 # Docker che non risponde.
 cat >"$bin/docker" <<'FAKE'

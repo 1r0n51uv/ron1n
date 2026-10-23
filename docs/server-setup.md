@@ -11,6 +11,8 @@ indirizzi dei servizi e dove stanno i `.env`.
 curl -fsSL https://raw.githubusercontent.com/1r0n51uv/ron1n/main/scripts/bootstrap.sh | sh
 ```
 
+Per usare i servizi dai client vedi [Accesso dai client](#accesso-dai-client).
+
 Per tornare indietro, `sudo /opt/ron1n/scripts/cleanup.sh` chiede cosa
 eliminare (stack, volumi, immagini, download, firewall, SSH, Tailscale,
 repo) e lo toglie. Docker Engine resta.
@@ -36,3 +38,36 @@ I passi sotto sono la stessa cosa fatta a mano.
 9. **Stack:** `cd /opt/ron1n && sudo ./infra.sh up` crea `.env`, reti e
    cartelle e avvia tutto; `sudo ./infra.sh down` spegne. Dettagli in
    [`infra/README.md`](../infra/README.md).
+
+## Accesso dai client
+
+I siti del server (`https://ron1n.home`, `https://torrent.ron1n.home`…)
+si aprono dai dispositivi nella tailnet. Una volta per tutta la tailnet,
+poi una volta per dispositivo.
+
+**Nomi, nella [console Tailscale](https://login.tailscale.com/admin/dns)
+(una volta):** DNS → Nameservers → Add nameserver → Custom, indirizzo =
+IP Tailscale del server (`tailscale ip -4`, lo stampa anche il bootstrap),
+attiva **Restrict to domain** e scrivi `ron1n.home`. Risponde lo stack
+[`dns`](../infra/dns/README.md). Sui client deve essere attivo "Use
+Tailscale DNS" (il default; su Linux `tailscale up --accept-dns`).
+
+**Certificato, su ogni dispositivo:** Caddy firma i siti con una sua CA,
+che va installata come attendibile. Da un dispositivo nella tailnet apri
+`http://ca.ron1n.home` (in HTTP: l'HTTPS diventa valido dopo).
+
+- **iPhone/iPad:** apri il link in Safari e consenti il download del
+  profilo. Impostazioni → Profilo scaricato → Installa. Poi Impostazioni →
+  Generali → Info → Impostazioni certificati attendibili e attiva la
+  fiducia completa per "Caddy Local Authority".
+- **macOS:** apri il file scaricato, finisce in Accesso Portachiavi; doppio
+  clic sul certificato → Fidati → Quando usi questo certificato: Fidati
+  sempre.
+- **Windows:** doppio clic sul file → Installa certificato → Computer
+  locale → Autorità di certificazione radice attendibili.
+
+Se lo stack proxy riparte da volumi nuovi la CA cambia: va reinstallata.
+
+**SSH:** il bootstrap attiva Tailscale SSH, quindi da qualsiasi client
+SSH (anche Termius o Blink su iPhone) basta `ssh <utente>@ron1n`, senza
+chiavi né password: autentica Tailscale.
