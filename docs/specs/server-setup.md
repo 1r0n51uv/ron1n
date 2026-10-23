@@ -129,7 +129,7 @@ Accettazione:
 
 ### SETUP-006 · Certificato di Caddy scaricabile dai client
 
-Stato: fatto (#32)
+Stato: fatto (#32) · da togliere con SETUP-008
 
 Il certificato radice di Caddy si installa da un client senza `scp`,
 anche da iPhone.
@@ -171,3 +171,42 @@ Accettazione:
 - [x] `docs/server-setup.md` ha la procedura per spostare a mano i dati
       di un server già installato, con il modo per tornare indietro.
 - [x] Il cleanup lascia i bind mount, come lascia Docker Engine.
+
+### SETUP-008 · Certificati pubblici per i nomi privati
+
+Stato: da fare
+
+I siti della tailnet hanno certificati Let's Encrypt, validi su ogni
+client senza installare niente: niente più CA di Caddy da rendere
+attendibile, che le app iOS rifiutano comunque (TLS -9802) anche quando
+Safari la accetta. Il dominio è `ron1n.space`, registrato su Namecheap con
+i DNS su Cloudflare; i nomi privati stanno sotto `home.ron1n.space`, il
+resto del dominio resta per i siti pubblici del Tunnel.
+
+Accettazione:
+
+- [ ] I siti passano da `*.ron1n.home` a `*.home.ron1n.space`: la
+      dashboard su `home.ron1n.space`, poi `status.`, `torrent.`,
+      `glances.` e `ios.` sotto `home.ron1n.space`. Il dominio sta in
+      `DOMINIO` (default `home.ron1n.space`) nei `.env` di `proxy` e `dns`,
+      non scritto a mano nei file.
+- [ ] Caddy ha un'immagine costruita in locale, a versione fissa, con il
+      plugin `caddy-dns/cloudflare`, e prende un solo certificato wildcard
+      `*.home.ron1n.space` più `home.ron1n.space` con la verifica DNS-01:
+      i nomi dei servizi non finiscono nei registri pubblici dei
+      certificati. Il token Cloudflare (`CF_API_TOKEN`, permesso solo
+      "Zone · DNS · Edit" su `ron1n.space`) sta in `infra/proxy/.env`, e il
+      bootstrap lo chiede senza mostrarlo.
+- [ ] Su internet `home.ron1n.space` non ha record, a parte il TXT
+      temporaneo della verifica, che scrive e toglie Caddy. I nomi li
+      risolve solo lo stack `dns` (SETUP-005), che passa alla zona
+      `DOMINIO` con l'IP Tailscale; lo split DNS nella console Tailscale
+      va su `home.ron1n.space`.
+- [ ] Spariscono `local_certs`, la zona `ron1n.home` e la pagina
+      `ca.ron1n.home` (SETUP-006): sul telefono il profilo di Caddy si può
+      togliere. Riferimenti, README, bootstrap (riepilogo finale e split
+      DNS) e la pagina `ios` usano i nomi nuovi.
+- [ ] Caddy pubblica anche la `443/udp`, visto che annuncia HTTP/3.
+- [ ] `docs/server-setup.md` spiega come spostare i nameserver da
+      Namecheap a Cloudflare, creare il token e cambiare lo split DNS; il
+      cleanup toglie l'immagine di Caddy costruita in locale con le altre.
