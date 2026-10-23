@@ -129,7 +129,7 @@ Accettazione:
 
 ### SETUP-006 · Certificato di Caddy scaricabile dai client
 
-Stato: in corso (#31)
+Stato: fatto (#32)
 
 Il certificato radice di Caddy si installa da un client senza `scp`,
 anche da iPhone.
