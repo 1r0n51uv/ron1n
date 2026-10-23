@@ -46,22 +46,23 @@ cache di Docker vanno su `/srv` (SETUP-007). Con Docker 29 le immagini
 stanno in `/var/lib/containerd`, non solo in `/var/lib/docker`, quindi si
 spostano tutte e due e si rimontano al loro posto in bind. Su un server
 nuovo lo fa il bootstrap; su uno già installato, a mano (gli stack si
-fermano qualche minuto e ripartono da soli):
+fermano qualche minuto; `cp -a` perché su Debian minimale `rsync` non c'è). Un comando alla volta: se uno fallisce, fermati prima di avviare Docker.
 
 ```sh
 docker builder prune -af
 sudo systemctl stop docker docker.socket containerd
-sudo rsync -aHAX /var/lib/docker/ /srv/docker/
-sudo rsync -aHAX /var/lib/containerd/ /srv/containerd/
+sudo cp -a /var/lib/docker /srv/docker
+sudo cp -a /var/lib/containerd /srv/containerd
 sudo mv /var/lib/docker /var/lib/docker.old
 sudo mv /var/lib/containerd /var/lib/containerd.old
 sudo mkdir /var/lib/docker /var/lib/containerd
 echo '/srv/docker /var/lib/docker none bind,x-systemd.requires-mounts-for=/srv 0 0' | sudo tee -a /etc/fstab
 echo '/srv/containerd /var/lib/containerd none bind,x-systemd.requires-mounts-for=/srv 0 0' | sudo tee -a /etc/fstab
-sudo systemctl daemon-reload && sudo mount -a
+sudo systemctl daemon-reload
+sudo mount -a
 findmnt /var/lib/docker /var/lib/containerd
 sudo systemctl start containerd docker
-cd /opt/ron1n && sudo ./infra.sh status
+cd /opt/ron1n && sudo ./infra.sh up
 ```
 
 Riavvia una volta; se dopo il riavvio è tutto su,
