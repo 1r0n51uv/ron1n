@@ -95,8 +95,37 @@ EOF
   info "aggiornamenti di sicurezza automatici attivi"
 }
 
+# Dati di Docker e containerd sul disco di /srv, se è un filesystem diverso
+# da /var (SETUP-007): bind mount in /etc/fstab, prima che Docker parta.
+# Docker 29 tiene le immagini nello snapshotter di containerd, per questo
+# servono tutte e due le cartelle. I dati già esistenti non si spostano.
+docker_on_srv() {
+  [ -d /srv ] && [ -d /var ] || return 0
+  if [ "$(stat -c %d /srv)" = "$(stat -c %d /var)" ]; then
+    info "/srv e /var sono sullo stesso disco: i dati di Docker restano in /var/lib"
+    return 0
+  fi
+  for d in docker containerd; do
+    target=/var/lib/$d
+    if grep -q "^/srv/$d $target " /etc/fstab; then
+      mountpoint -q "$target" || mount "$target"
+      continue
+    fi
+    if [ -d "$target" ] && [ -n "$(ls -A "$target" 2>/dev/null)" ]; then
+      info "$target ha già dei dati: lo lascio dov'è (per spostarlo vedi docs/server-setup.md)"
+      continue
+    fi
+    mkdir -p "/srv/$d" "$target"
+    echo "/srv/$d $target none bind,x-systemd.requires-mounts-for=/srv 0 0" >>/etc/fstab
+    mount "$target"
+    info "$target su /srv/$d"
+  done
+  systemctl daemon-reload
+}
+
 install_docker() {
   step "Docker Engine e Compose"
+  docker_on_srv
   install -m 0755 -d /etc/apt/keyrings
   if [ ! -s /etc/apt/keyrings/docker.asc ]; then
     curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc

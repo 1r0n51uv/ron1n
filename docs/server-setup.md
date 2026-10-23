@@ -39,6 +39,36 @@ I passi sotto sono la stessa cosa fatta a mano.
    cartelle e avvia tutto; `sudo ./infra.sh down` spegne. Dettagli in
    [`infra/README.md`](../infra/README.md).
 
+## Dati di Docker su `/srv`
+
+Sul mini PC `/var` è di 12 GB e `/srv` di oltre 400: immagini, volumi e
+cache di Docker vanno su `/srv` (SETUP-007). Con Docker 29 le immagini
+stanno in `/var/lib/containerd`, non solo in `/var/lib/docker`, quindi si
+spostano tutte e due e si rimontano al loro posto in bind. Su un server
+nuovo lo fa il bootstrap; su uno già installato, a mano (gli stack si
+fermano qualche minuto e ripartono da soli):
+
+```sh
+docker builder prune -af
+sudo systemctl stop docker docker.socket containerd
+sudo rsync -aHAX /var/lib/docker/ /srv/docker/
+sudo rsync -aHAX /var/lib/containerd/ /srv/containerd/
+sudo mv /var/lib/docker /var/lib/docker.old
+sudo mv /var/lib/containerd /var/lib/containerd.old
+sudo mkdir /var/lib/docker /var/lib/containerd
+echo '/srv/docker /var/lib/docker none bind,x-systemd.requires-mounts-for=/srv 0 0' | sudo tee -a /etc/fstab
+echo '/srv/containerd /var/lib/containerd none bind,x-systemd.requires-mounts-for=/srv 0 0' | sudo tee -a /etc/fstab
+sudo systemctl daemon-reload && sudo mount -a
+findmnt /var/lib/docker /var/lib/containerd
+sudo systemctl start containerd docker
+cd /opt/ron1n && sudo ./infra.sh status
+```
+
+Riavvia una volta; se dopo il riavvio è tutto su,
+`sudo rm -rf /var/lib/docker.old /var/lib/containerd.old`. Per tornare
+indietro: togli le due righe da `/etc/fstab`, riavvia e rinomina le
+cartelle `.old`.
+
 ## Accesso dai client
 
 I siti del server (`https://ron1n.home`, `https://torrent.ron1n.home`…)
