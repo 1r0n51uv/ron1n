@@ -247,7 +247,7 @@ Accettazione:
 
 ### SETUP-010 · Cloudflare da script
 
-Stato: in corso
+Stato: fatto (#53)
 
 Tunnel, DNS e Access di SETUP-008 si preparano con un comando, non a mano
 nella dashboard: la prima volta li ha creati la CLI `cf`, e lo script
