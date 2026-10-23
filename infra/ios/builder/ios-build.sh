@@ -32,7 +32,9 @@ USAGE
 }
 
 has_sdk() {
-  xtool sdk status 2>/dev/null | grep -q "is installed"
+  status=$(xtool sdk status) || die "xtool non parte: l'errore è sopra"
+  case $status in *"is installed"*) return 0 ;; esac
+  return 1
 }
 
 cmd_sdk() {

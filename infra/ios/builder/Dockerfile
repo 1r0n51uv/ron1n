@@ -16,8 +16,10 @@ RUN curl -fsSL -o /tmp/xtool.AppImage \
   && chmod +x /tmp/xtool.AppImage \
   && cd /opt && /tmp/xtool.AppImage --appimage-extract >/dev/null \
   && mv /opt/squashfs-root /opt/xtool \
-  && ln -s /opt/xtool/AppRun /usr/local/bin/xtool \
+  && chmod -R a+rX /opt/xtool \
   && rm /tmp/xtool.AppImage
+# Dal PATH, non da un link: xtool cerca le sue librerie accanto a sé.
+ENV PATH=/opt/xtool/usr/bin:$PATH
 
 COPY ios-build.sh /usr/local/bin/ios-build
 # HOME dentro /work: lì xtool e SwiftPM tengono SDK e cache, sull'host.
