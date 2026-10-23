@@ -7,7 +7,7 @@ Apple ID. Specifica: [`docs/specs/ios-build.md`](../../docs/specs/ios-build.md).
 
 | Servizio      | Cosa fa                                                                        |
 | ------------- | ------------------------------------------------------------------------------ |
-| `ios-builds`  | pagina `https://ios.ron1n.home` con le IPA, sempre accesa, solo tailnet        |
+| `ios-builds`  | pagina `https://ios.ron1n.space` con le IPA, sempre accesa, dietro Access      |
 | `ios-builder` | Swift e xtool; si lancia a mano, non parte con `./infra.sh up` (profilo build) |
 
 ## Configurazione
@@ -59,7 +59,7 @@ sempre l'ultima. Restano le ultime 5 build.
 
 ## Installazione sul telefono
 
-Nella tailnet, da Safari: `https://ios.ron1n.home`, tocca l'IPA, poi
+Da Safari (al primo accesso Cloudflare Access chiede il codice via mail): `https://ios.ron1n.space`, tocca l'IPA, poi
 **Condividi → SideStore** (oppure in SideStore **+** e scegli il file da
 **Download**). SideStore la firma e la installa; con l'Apple ID gratuito
 la firma dura 7 giorni e SideStore la rinnova da solo.

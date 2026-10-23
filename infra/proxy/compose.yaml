@@ -1,13 +1,13 @@
-# Reverse proxy per tutti i servizi web del server.
+# Reverse proxy per tutti i servizi web del server. Riceve le richieste dal
+# tunnel (infra/tunnel) sulla rete proxy: niente porte sull'host.
 name: proxy
 
 services:
   caddy:
     image: caddy:2.10-alpine
     restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
+    environment:
+      DOMINIO: ${DOMINIO:?manca DOMINIO in infra/proxy/.env}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data

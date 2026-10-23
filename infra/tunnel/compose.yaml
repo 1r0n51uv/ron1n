@@ -1,0 +1,19 @@
+# Cloudflare Tunnel: pubblica i siti di Caddy su *.ron1n.space, sempre
+# dietro Cloudflare Access. Connessione solo in uscita: niente porte aperte
+# sul router né sull'host. Hostname e Access stanno nella dashboard di
+# Cloudflare (README). Spec SETUP-008.
+name: tunnel
+
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:2026.10.3
+    restart: unless-stopped
+    command: ["tunnel", "--no-autoupdate", "run"]
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?manca TUNNEL_TOKEN in infra/tunnel/.env}
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true

@@ -33,6 +33,7 @@ echo 'SEGRETO=cambiami' >"$repo/infra/aaa-nuovo/.env.example"
 printf 'name: zzz-libero\nservices: {}\n' >"$repo/infra/zzz-libero/compose.yaml"
 sed -i "s|^DOWNLOADS_DIR=.*|DOWNLOADS_DIR=$tmp/downloads|" "$repo/infra/torrent/.env.example"
 sed -i "s|^IOS_DIR=.*|IOS_DIR=$tmp/ios|" "$repo/infra/ios/.env.example"
+sed -i "s|^TUNNEL_TOKEN=.*|TUNNEL_TOKEN=finto|" "$repo/infra/tunnel/.env.example"
 
 # docker finto: scrive in $LOG "<cartella> <argomenti>". Le reti esistono
 # solo dopo network create; ps elenca un container per gli stack in $UP.
@@ -86,7 +87,7 @@ check "status: stack spenti" grep -q "postgres     spento" "$tmp/out"
 run up
 check "up: termina senza errori" true
 check "up: reti proxy e db create" sh -c "grep -q 'network create proxy' '$LOG' && grep -q 'network create db' '$LOG'"
-check "up: ordine di avvio" test "$(order up)" = "postgres torrent glances ron1nos monitoring updates proxy dns ios zzz-libero "
+check "up: ordine di avvio" test "$(order up)" = "postgres torrent glances ron1nos monitoring updates proxy tunnel dns ios zzz-libero "
 check "up: aspetta Postgres sano" grep -q "^postgres compose up .*--wait" "$LOG"
 check "up: niente template" sh -c "! grep -q '^_app-template' '$LOG'"
 check "up: stack senza regole né .env non avviato" grep -q "aaa-nuovo: manca .env" "$tmp/out"
@@ -100,6 +101,7 @@ check "up: DATABASE_URL usa la password di Postgres" \
 check "up: stesse credenziali qBittorrent" test "$(envval ron1nos QBT_PASSWORD)" = "$(envval torrent QBT_PASSWORD)"
 check "up: stesso utente qBittorrent" test "$(envval ron1nos QBT_USERNAME)" = "$(envval torrent QBT_USERNAME)"
 check "up: DNS con l'IP Tailscale" test "$(envval dns TS_IP)" = 100.64.0.7
+check "up: dominio di default" test "$(envval proxy DOMINIO)" = ron1n.space
 check "up: PUID dell'utente" test "$(envval torrent PUID)" = "$owner"
 check "up: cartella dei download creata" test -d "$tmp/downloads"
 check "up: cartella delle build iOS creata" test -d "$tmp/ios/builds"
@@ -127,6 +129,12 @@ check "down: stack spento non è un errore" grep -q "glances: già spento" "$tmp
 check "down: .env conservati" test -f "$repo/infra/postgres/.env"
 run down ron1nos
 check "down con nomi: solo quelli" test "$(order down)" = "ron1nos "
+
+# Senza token il tunnel non parte, e lo dice.
+sed -i "s|^TUNNEL_TOKEN=.*|TUNNEL_TOKEN=|" "$repo/infra/tunnel/.env"
+run up tunnel
+check "tunnel senza token: non avviato" test -z "$(order up)"
+check "tunnel senza token: lo dice" grep -q "tunnel: manca TUNNEL_TOKEN" "$tmp/out"
 
 # Senza Tailscale il DNS non ha .env e non parte.
 rm -f "$repo/infra/dns/.env" "$bin/tailscale"

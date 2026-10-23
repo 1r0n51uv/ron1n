@@ -22,7 +22,7 @@ modifica il `.env` e si riavvia il container. Una password cambiata dalla
 Web UI viene sovrascritta al riavvio successivo. Lo script deve restare
 eseguibile e di proprietà di root, altrimenti l'immagine lo salta.
 
-Apri `https://torrent.ron1n.home` (via Tailscale) e in Strumenti → Opzioni
+Apri `https://torrent.ron1n.space` (Cloudflare Access chiede il codice via mail) e in Strumenti → Opzioni
 → Web UI:
 
 1. **Non attivare** "Salta l'autenticazione per i client in localhost" né
@@ -38,9 +38,8 @@ In Opzioni → Download imposta la cartella predefinita a `/downloads`.
 
 ## Rete
 
-- La Web UI (8080) non è pubblicata sull'host: la raggiunge solo Caddy, e
-  Caddy è raggiungibile solo dalla tailnet. Non va esposta via Cloudflare
-  Tunnel.
+- La Web UI (8080) non è pubblicata sull'host: la raggiunge solo Caddy,
+  dal tunnel e sempre dietro Cloudflare Access.
 - La porta BitTorrent (`TORRENTING_PORT`, default 6881) è pubblicata su
   TCP e UDP. Inoltrala sul router per accettare connessioni in ingresso;
   senza inoltro funziona comunque, con meno peer.

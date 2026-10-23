@@ -3,17 +3,18 @@
 Uno stack Docker Compose per cartella. Sul server il repo è clonato in
 `/opt/ron1n`.
 
-| Stack        | Contenuto                                                                                      |
-| ------------ | ---------------------------------------------------------------------------------------------- |
-| `proxy`      | Caddy, reverse proxy per tutti i servizi web                                                   |
-| `dns`        | CoreDNS, i nomi `*.ron1n.home` per i client della tailnet ([README](dns/README.md))            |
-| `monitoring` | Uptime Kuma                                                                                    |
-| `updates`    | Watchtower, aggiorna solo i container con l'etichetta di opt-in                                |
-| `torrent`    | qBittorrent, client torrent usato dal modulo Download di ron1nOS ([README](torrent/README.md)) |
-| `glances`    | Glances, risorse del server per il modulo Server di ron1nOS ([README](glances/README.md))      |
-| `postgres`   | Postgres condiviso dalle app ([README](postgres/README.md))                                    |
-| `ron1nos`    | Dashboard ron1nOS su `ron1n.home` ([README](ron1nos/README.md))                                |
-| `ios`        | Build delle app iOS con xtool e pagina `ios.ron1n.home` ([README](ios/README.md))              |
+| Stack        | Contenuto                                                                                           |
+| ------------ | --------------------------------------------------------------------------------------------------- |
+| `proxy`      | Caddy, reverse proxy per tutti i servizi web ([README](proxy/README.md))                            |
+| `tunnel`     | Cloudflare Tunnel: i siti su `*.ron1n.space`, dietro Cloudflare Access ([README](tunnel/README.md)) |
+| `dns`        | CoreDNS, i vecchi nomi `*.ron1n.home` per la tailnet, fino a SETUP-009 ([README](dns/README.md))    |
+| `monitoring` | Uptime Kuma                                                                                         |
+| `updates`    | Watchtower, aggiorna solo i container con l'etichetta di opt-in                                     |
+| `torrent`    | qBittorrent, client torrent usato dal modulo Download di ron1nOS ([README](torrent/README.md))      |
+| `glances`    | Glances, risorse del server per il modulo Server di ron1nOS ([README](glances/README.md))           |
+| `postgres`   | Postgres condiviso dalle app ([README](postgres/README.md))                                         |
+| `ron1nos`    | Dashboard ron1nOS su `home.ron1n.space` ([README](ron1nos/README.md))                               |
+| `ios`        | Build delle app iOS con xtool e pagina `ios.ron1n.space` ([README](ios/README.md))                  |
 
 ## Avvio e spegnimento
 
