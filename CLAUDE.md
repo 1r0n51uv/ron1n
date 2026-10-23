@@ -20,7 +20,8 @@ Contesto per le sessioni di Claude che lavorano su questo repo.
   aggiorna `ask_stack_env` o `ask_ron1nos`.
 - Segreti solo in file `.env` non versionati; versiona un `.env.example`.
 - Immagini sempre con tag esplicito; niente `latest` per i servizi con dati.
-- Accesso privato via Tailscale, pubblico solo via Cloudflare Tunnel.
+- Siti e API solo via Cloudflare Tunnel, dietro Cloudflare Access; Tailscale
+  resta solo per l'SSH.
 - Flusso di sviluppo delle app (specifica → issue con label → PR con CI →
   immagine GHCR → Watchtower): `docs/flusso-sviluppo.md`. Il template per un
   nuovo repo app è in `templates/app/`.

@@ -190,15 +190,6 @@ make_envs() {
       "QBT_PASSWORD=$qbt_pw" \
       "DATABASE_URL=postgres://ron1nos:$db_pw@postgres:5432/ron1nos"
   fi
-
-  if [ -f "$INFRA/dns/compose.yaml" ] && [ ! -f "$INFRA/dns/.env" ]; then
-    ts_ip=$(tailscale ip -4 2>/dev/null | head -n 1) || ts_ip=
-    if [ -n "$ts_ip" ]; then
-      env_create "$INFRA/dns" "TS_IP=$ts_ip"
-    else
-      info "dns: Tailscale non risponde, niente .env (scrivi TS_IP in infra/dns/.env)"
-    fi
-  fi
 }
 
 # Cartella $1 dell'host, di proprietà dell'utente degli stack.
