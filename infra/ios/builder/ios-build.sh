@@ -21,6 +21,8 @@ STORE=$BUILDS/sidestore
 KEEP=5
 IOS_URL=${IOS_URL:-https://ios.ron1n.space}
 INTERVALLO=${IOS_INTERVALLO:-300}
+# L'icona dell'app nella source: SideStore rifiuta una source senza iconURL.
+ICON=${IOS_ICON:-/usr/local/share/ios-build/icon.png}
 
 info() { printf '    %s\n' "$*"; }
 step() { printf '\033[1;31m==>\033[0m \033[1m%s\033[0m\n' "$*"; }
@@ -137,17 +139,21 @@ pubblica() {
   size=$(wc -c <"$STORE/$nome" | tr -d ' ')
   data=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   url=$IOS_URL/sidestore/$nome
+  icona=$IOS_URL/sidestore/icon.png
+  [ -f "$ICON" ] && cp "$ICON" "$STORE/icon.png"
   cat >"$STORE/source.json.tmp" <<JSON
 {
   "name": "ron1n",
   "identifier": "space.ron1n.ios",
   "sourceURL": $(json_str "$IOS_URL/sidestore/source.json"),
+  "iconURL": $(json_str "$icona"),
   "apps": [
     {
       "name": $(json_str "$2"),
       "bundleIdentifier": $(json_str "$3"),
       "developerName": "ron1n",
       "localizedDescription": "App di ron1n compilata sul server di casa.",
+      "iconURL": $(json_str "$icona"),
       "version": $(json_str "$4"),
       "versionDate": "$data",
       "downloadURL": $(json_str "$url"),
