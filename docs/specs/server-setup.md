@@ -300,3 +300,26 @@ Accettazione:
       service token di Access e il token di ron1nOS non sono nell'IPA,
       l'utente li incolla nell'app.
 - [ ] Test con il curl finto di `scripts/test-cloudflare-sh.sh`.
+
+### SETUP-012 · Repo e stack senza sudo
+
+Stato: in corso
+
+`/opt/ron1n` era di root: ogni `git pull` e ogni `./infra.sh` chiedeva
+sudo, quindi l'intervento del proprietario. Il repo diventa
+dell'amministratore, già nel gruppo `docker` (SETUP-001): aggiornare il
+repo e accendere o spegnere gli stack non richiede sudo, e Claude dal
+server lo fa da solo. Sudo resta per il sistema (apt, systemctl,
+Tailscale, fstab).
+
+Accettazione:
+
+- [ ] Il bootstrap clona `/opt/ron1n` come amministratore; un repo già
+      clonato da root passa all'amministratore (`chown -R`) e git gira
+      come lui.
+- [ ] `./infra.sh up|down|status` funziona senza sudo dal proprietario del
+      repo; con sudo funziona come prima.
+- [ ] `docs/server-setup.md` e i README degli stack non chiedono più sudo
+      per git e `infra.sh`, e spiegano il passaggio per un server già
+      installato.
+- [ ] Il cleanup non cambia: toglie il repo come prima, di chiunque sia.

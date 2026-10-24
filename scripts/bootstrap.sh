@@ -246,20 +246,30 @@ EOF
   info "aperti: ssh, tailnet, BitTorrent $torrent_port; porte dei container solo dalla tailnet ($ext_if filtrata)"
 }
 
+# Un comando come $ADMIN, con la sua home (git legge lì la configurazione).
+as_admin() {
+  runuser -u "$ADMIN" -- env HOME="$ADMIN_HOME" "$@"
+}
+
+# Il repo è di $ADMIN (SETUP-012): git e infra.sh senza sudo. Un repo
+# clonato da root da un bootstrap vecchio passa a $ADMIN.
 clone_repo() {
   step "Repo ron1n in $RON1N_DIR"
   if [ -d "$RON1N_DIR/.git" ]; then
-    [ -z "$(git -C "$RON1N_DIR" status --porcelain --untracked-files=no)" ] ||
+    chown -R "$ADMIN_UID:$ADMIN_GID" "$RON1N_DIR"
+    [ -z "$(as_admin git -C "$RON1N_DIR" status --porcelain --untracked-files=no)" ] ||
       die "$RON1N_DIR ha modifiche locali: sistemale (git -C $RON1N_DIR status) e rilancia"
-    git -C "$RON1N_DIR" fetch -q origin "$RON1N_BRANCH"
-    git -C "$RON1N_DIR" checkout -q "$RON1N_BRANCH"
-    git -C "$RON1N_DIR" merge -q --ff-only "origin/$RON1N_BRANCH" ||
+    as_admin git -C "$RON1N_DIR" fetch -q origin "$RON1N_BRANCH"
+    as_admin git -C "$RON1N_DIR" checkout -q "$RON1N_BRANCH"
+    as_admin git -C "$RON1N_DIR" merge -q --ff-only "origin/$RON1N_BRANCH" ||
       die "$RON1N_DIR non si aggiorna con fast-forward"
-    info "aggiornato a $(git -C "$RON1N_DIR" rev-parse --short HEAD)"
+    info "aggiornato a $(as_admin git -C "$RON1N_DIR" rev-parse --short HEAD)"
   else
-    git clone -q --branch "$RON1N_BRANCH" "$RON1N_REPO" "$RON1N_DIR"
-    info "clonato a $(git -C "$RON1N_DIR" rev-parse --short HEAD)"
+    install -d -o "$ADMIN_UID" -g "$ADMIN_GID" "$RON1N_DIR"
+    as_admin git clone -q --branch "$RON1N_BRANCH" "$RON1N_REPO" "$RON1N_DIR"
+    info "clonato a $(as_admin git -C "$RON1N_DIR" rev-parse --short HEAD)"
   fi
+  info "di $ADMIN: git pull e ./infra.sh senza sudo"
 }
 
 # Con curl | sh lo stdin è lo script: le risposte si leggono da /dev/tty.
@@ -518,7 +528,7 @@ summary() {
   for f in "$RON1N_DIR"/infra/*/.env; do
     [ -f "$f" ] && echo "    $f"
   done
-  echo "  Dopo una modifica: cd $RON1N_DIR && sudo ./infra.sh up"
+  echo "  Dopo una modifica: cd $RON1N_DIR && ./infra.sh up (da $ADMIN, senza sudo)"
   echo
   echo "  Credenziali:"
   echo "    qBittorrent  $(env_get "$RON1N_DIR/infra/torrent/.env" QBT_USERNAME) / $(env_get "$RON1N_DIR/infra/torrent/.env" QBT_PASSWORD)"

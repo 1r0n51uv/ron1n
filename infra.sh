@@ -5,8 +5,9 @@
 #   ./infra.sh down [stack...]    spegne, conservando dati e .env
 #   ./infra.sh status [stack...]  stato dei container
 #
-# Senza nomi agisce su tutti gli stack. Se il repo è di root, come in
-# /opt/ron1n, va lanciato con sudo. Specifica: docs/specs/infra.md.
+# Senza nomi agisce su tutti gli stack. Si lancia senza sudo dal
+# proprietario del repo, nel gruppo docker (SETUP-012); con sudo funziona
+# lo stesso. Specifica: docs/specs/infra.md.
 set -eu
 
 ROOT=$(cd "$(dirname "$0")" && pwd)

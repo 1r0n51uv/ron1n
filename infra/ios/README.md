@@ -26,7 +26,7 @@ In `.env`:
 - `IOS_INTERVALLO`: ogni quanti secondi `ios-autobuild` controlla main.
 
 `./infra.sh up` crea `.env` e le cartelle; dopo una modifica rilancia
-`sudo ./infra.sh up ios`.
+`./infra.sh up ios`.
 
 ## SDK iOS, una volta sola
 
