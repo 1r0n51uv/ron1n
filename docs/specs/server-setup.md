@@ -278,3 +278,25 @@ Accettazione:
       `npm run check`. `jq` diventa un pacchetto di base del bootstrap,
       che il cleanup lascia come curl e git.
 - [x] Tutto sul piano gratuito di Cloudflare.
+
+### SETUP-011 · Eccezione di Access per SideStore
+
+Stato: in corso
+
+SideStore scarica la source e le IPA da solo e non sa fare il login di
+Cloudflare Access (né mandare il service token). Una sola cartella di
+`ios.DOMINIO` resta quindi aperta: quella che contiene la source e le IPA
+(IOSB-003). Il resto di `*.DOMINIO`, comprese la pagina di `ios` e le
+build di prova, resta dietro Access.
+
+Accettazione:
+
+- [ ] `scripts/cloudflare.sh` crea o aggiorna la policy riusabile
+      "ron1n · pubblico" (Bypass, tutti) e l'applicazione Access
+      "ron1n · SideStore" sul percorso `ios.DOMINIO/sidestore`, che vale
+      prima di quella su `*.DOMINIO`. Rilanciato non crea doppioni.
+- [ ] Bastano i permessi del token di SETUP-010. Tutto sul piano gratuito.
+- [ ] Nella cartella pubblica ci sono solo le IPA di main e la source: il
+      service token di Access e il token di ron1nOS non sono nell'IPA,
+      l'utente li incolla nell'app.
+- [ ] Test con il curl finto di `scripts/test-cloudflare-sh.sh`.

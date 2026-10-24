@@ -120,6 +120,12 @@ check "primo giro: applicazione su *.ron1n.space" test "$(jq -r '.[0].domain' "$
 check "primo giro: sessione di un mese" test "$(jq -r '.[0].session_duration' "$STATE/app.json")" = 730h
 check "primo giro: le due policy nell'applicazione" \
   test "$(jq -c '[.[0].policies[].id]' "$STATE/app.json")" = '["policy-0","policy-1"]'
+check "primo giro: eccezione solo sulla cartella di SideStore" \
+  test "$(jq -r '.[1].domain' "$STATE/app.json")" = "ios.ron1n.space/sidestore"
+check "primo giro: policy bypass per tutti" \
+  test "$(jq -c '.[2] | [.decision, .include]' "$STATE/policy.json")" = '["bypass",[{"everyone":{}}]]'
+check "primo giro: l'eccezione usa la policy pubblica" \
+  test "$(jq -c '[.[1].policies[].id]' "$STATE/app.json")" = '["policy-2"]'
 check "primo giro: token del tunnel salvato" test "$(cat "$CF_HOME/tunnel-token")" = TOKEN-DEL-TUNNEL
 check "primo giro: credenziali dell'app salvate" test "$(jq -r .client_secret "$CF_HOME/ron1nos-ios.json")" = SEGRETO-1
 for f in tunnel-token ron1nos-ios.json; do
@@ -131,7 +137,8 @@ check "primo giro: niente segreti a schermo" sh -c "! grep -q -e SEGRETO -e TOKE
 run
 check "rilancio: nessuna creazione" test "$(calls POST)" = 0
 check "rilancio: un solo tunnel" test "$(jq length "$STATE/tunnel.json")" = 1
-check "rilancio: due sole policy" test "$(jq length "$STATE/policy.json")" = 2
+check "rilancio: tre sole policy" test "$(jq length "$STATE/policy.json")" = 3
+check "rilancio: due sole applicazioni" test "$(jq length "$STATE/app.json")" = 2
 check "rilancio: secret invariato" test "$(jq -r .client_secret "$CF_HOME/ron1nos-ios.json")" = SEGRETO-1
 
 # Rotazione del secret.

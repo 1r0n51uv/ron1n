@@ -1,6 +1,6 @@
 # App iOS compilate sul server con xtool, senza Mac (spec IOSB). Il builder
-# si lancia a mano (README); la pagina con le IPA resta accesa per
-# scaricarle dal telefono e aprirle con SideStore.
+# si lancia a mano (README) oppure lo lancia ios-autobuild a ogni commit su
+# main; la pagina con le IPA resta accesa per SideStore.
 name: ios
 
 services:
@@ -15,16 +15,33 @@ services:
     networks:
       - proxy
 
+  # Compila main a ogni commit nuovo e lo pubblica nella source di
+  # SideStore. IOSB-003, IOSB-004.
+  ios-autobuild:
+    image: ron1n/ios-builder:xtool-1.22.2-r2
+    build: ./builder
+    # L'immagine è solo locale: ./infra.sh up la costruisce (dalla cache)
+    # invece di cercarla su Docker Hub.
+    pull_policy: build
+    restart: unless-stopped
+    command: ["segui"]
+    user: "${PUID:-1000}:${PGID:-1000}"
+    environment: &builder-env
+      IOS_REPO: ${IOS_REPO:?manca IOS_REPO in infra/ios/.env}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      IOS_URL: ${IOS_URL:-https://ios.ron1n.space}
+      IOS_INTERVALLO: ${IOS_INTERVALLO:-300}
+    volumes:
+      - ${IOS_DIR:-/srv/ron1n-ios}:/work
+
   # Swift e xtool: docker compose run --rm ios-builder sdk | build [ref].
   # Con il profilo build non parte con ./infra.sh up. IOSB-001.
   ios-builder:
-    image: ron1n/ios-builder:xtool-1.22.2
+    image: ron1n/ios-builder:xtool-1.22.2-r2
     build: ./builder
     profiles: ["build"]
     user: "${PUID:-1000}:${PGID:-1000}"
-    environment:
-      IOS_REPO: ${IOS_REPO:?manca IOS_REPO in infra/ios/.env}
-      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+    environment: *builder-env
     volumes:
       - ${IOS_DIR:-/srv/ron1n-ios}:/work
 

@@ -107,7 +107,9 @@ gratuito.
    sudo ./infra.sh up tunnel
    ```
 
-5. Le credenziali dell'app iOS sono in `~/.cf-home/ron1nos-ios.json`:
+5. Lo script apre anche, e solo, `ios.DOMINIO/sidestore`: la source di
+   SideStore con le sue IPA (SETUP-011).
+6. Le credenziali dell'app iOS sono in `~/.cf-home/ron1nos-ios.json`:
    copiale dal telefono, mai in una chat. Per cambiarle,
    `scripts/cloudflare.sh --ruota`. Alla fine cancella l'API token.
 

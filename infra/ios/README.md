@@ -5,10 +5,11 @@ Le app iOS di ron1n si compilano qui, sul server, con
 firmata e si installa sul telefono con SideStore, che la firma con il tuo
 Apple ID. Specifica: [`docs/specs/ios-build.md`](../../docs/specs/ios-build.md).
 
-| Servizio      | Cosa fa                                                                        |
-| ------------- | ------------------------------------------------------------------------------ |
-| `ios-builds`  | pagina `https://ios.ron1n.space` con le IPA, sempre accesa, dietro Access      |
-| `ios-builder` | Swift e xtool; si lancia a mano, non parte con `./infra.sh up` (profilo build) |
+| Servizio        | Cosa fa                                                                        |
+| --------------- | ------------------------------------------------------------------------------ |
+| `ios-builds`    | pagina `https://ios.ron1n.space` con le IPA, sempre accesa, dietro Access      |
+| `ios-autobuild` | compila main a ogni commit nuovo e aggiorna la source di SideStore             |
+| `ios-builder`   | Swift e xtool; si lancia a mano, non parte con `./infra.sh up` (profilo build) |
 
 ## Configurazione
 
@@ -21,6 +22,8 @@ In `.env`:
 - `GITHUB_TOKEN`: per un repo privato. Su GitHub, **Settings → Developer
   settings → Fine-grained tokens**, solo il repo dell'app, permesso
   **Contents: Read-only**. Vuoto per un repo pubblico.
+- `IOS_URL`: indirizzo della pagina, per i link nella source di SideStore.
+- `IOS_INTERVALLO`: ogni quanti secondi `ios-autobuild` controlla main.
 
 `./infra.sh up` crea `.env` e le cartelle; dopo una modifica rilancia
 `sudo ./infra.sh up ios`.
@@ -55,7 +58,24 @@ docker compose -f infra/ios/compose.yaml run --rm ios-builder build v0.2   # un 
 ```
 
 L'IPA va in `IOS_DIR/builds` come `<app>-<commit>.ipa` e come `<app>.ipa`,
-sempre l'ultima. Restano le ultime 5 build.
+sempre l'ultima. Restano le ultime 5 build. Il numero di build è il numero
+di commit e la versione diventa `major.minor.<commit>`: sale da sola.
+
+Non serve lanciarla dopo un merge: `ios-autobuild` controlla main ogni 5
+minuti e compila da solo. Il suo log:
+`docker compose -f infra/ios/compose.yaml logs -f ios-autobuild`.
+
+## Aggiornamenti con SideStore
+
+Ogni build di main finisce anche in `IOS_DIR/builds/sidestore`, con la
+`source.json` per SideStore. Questa cartella è l'unica fuori da
+Cloudflare Access, perché SideStore non sa fare il login: la prepara
+`scripts/cloudflare.sh` (SETUP-011). Dentro non ci sono segreti.
+
+In SideStore, una volta sola: **Sources → +** e
+`https://ios.ron1n.space/sidestore/source.json`. Da lì, a ogni nuova
+versione compare **Update** in **My Apps**: lo tocchi e SideStore scarica,
+firma e installa sopra quella vecchia, senza perdere i dati.
 
 ## Installazione sul telefono
 
