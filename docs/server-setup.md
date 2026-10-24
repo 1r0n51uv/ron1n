@@ -34,10 +34,27 @@ I passi sotto sono la stessa cosa fatta a mano.
    gruppo `docker`.
 7. **Tailscale:** `curl -fsSL https://tailscale.com/install.sh | sh`, poi
    `sudo tailscale up --ssh`.
-8. **Repo:** `sudo git clone https://github.com/1r0n51uv/ron1n /opt/ron1n`.
-9. **Stack:** `cd /opt/ron1n && sudo ./infra.sh up` crea `.env`, reti e
-   cartelle e avvia tutto; `sudo ./infra.sh down` spegne. Dettagli in
+8. **Repo:** `sudo install -d -o "$USER" /opt/ron1n`, poi
+   `git clone https://github.com/1r0n51uv/ron1n /opt/ron1n`: il repo è tuo e
+   git non chiede sudo (SETUP-012).
+9. **Stack:** `cd /opt/ron1n && ./infra.sh up` crea `.env`, reti e
+   cartelle e avvia tutto; `./infra.sh down` spegne. Il tuo utente deve essere nel gruppo
+   `docker` (vale dal login successivo). Dettagli in
    [`infra/README.md`](../infra/README.md).
+
+## Repo senza sudo
+
+Il repo `/opt/ron1n` è dell'utente amministratore (SETUP-012): `git pull`
+e `./infra.sh` si lanciano senza sudo, e così anche Claude dal server può
+applicare le PR e riavviare gli stack. Sudo resta per il sistema: apt,
+systemctl, Tailscale, fstab. Su un server installato prima, una volta sola
+(oppure rilancia il bootstrap):
+
+```sh
+sudo chown -R "$USER": /opt/ron1n
+sudo git config --global --unset-all safe.directory || true
+cd /opt/ron1n && git status && ./infra.sh status
+```
 
 ## Dati di Docker su `/srv`
 
@@ -62,7 +79,7 @@ sudo systemctl daemon-reload
 sudo mount -a
 findmnt /var/lib/docker /var/lib/containerd
 sudo systemctl start containerd docker
-cd /opt/ron1n && sudo ./infra.sh up
+cd /opt/ron1n && ./infra.sh up
 ```
 
 Riavvia una volta; se dopo il riavvio è tutto su,
@@ -104,7 +121,7 @@ gratuito.
    scripts/cloudflare.sh --dry-run
    scripts/cloudflare.sh
    sudo sed -i "s|^TUNNEL_TOKEN=.*|TUNNEL_TOKEN=$(cat ~/.cf-home/tunnel-token)|" infra/tunnel/.env
-   sudo ./infra.sh up tunnel
+   ./infra.sh up tunnel
    ```
 
 5. Lo script apre anche, e solo, `ios.DOMINIO/sidestore`: la source di
@@ -118,7 +135,7 @@ gratuito.
 1. **Tunnel:** Zero Trust → Networks → Tunnels → Create a tunnel →
    Cloudflared, nome `ron1n`. Nella pagina "Install connector" copia il
    token (la stringa dopo `--token`) in `TUNNEL_TOKEN` di
-   `infra/tunnel/.env` e lancia `sudo ./infra.sh up tunnel`: il connettore
+   `infra/tunnel/.env` e lancia `./infra.sh up tunnel`: il connettore
    diventa "Healthy".
 2. **Hostname:** nel tunnel, Public Hostname → Add: sottodominio `*`,
    dominio `ron1n.space`, servizio `HTTP` `caddy:80`. Cloudflare crea da
@@ -150,7 +167,7 @@ il nameserver custom per `ron1n.home` (**DNS → Nameservers**).
 
 ```sh
 cd /opt/ron1n
-sudo ./infra.sh down dns
-sudo git pull --ff-only
-sudo rm -rf infra/dns
+./infra.sh down dns
+git pull --ff-only
+rm -rf infra/dns
 ```
