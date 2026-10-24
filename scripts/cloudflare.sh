@@ -1,7 +1,8 @@
 #!/bin/sh
 # Prepara l'account Cloudflare per il server (SETUP-010): tunnel con il suo
 # instradamento, record DNS wildcard, Cloudflare Access con le due policy e
-# il service token dell'app iOS. Si può rilanciare: ogni oggetto si cerca
+# il service token dell'app iOS, più l'eccezione per la source di SideStore
+# (SETUP-011). Si può rilanciare: ogni oggetto si cerca
 # per nome e si crea solo se manca, altrimenti si aggiorna.
 #
 #   scripts/cloudflare.sh [--dry-run] [--ruota]
@@ -27,6 +28,9 @@ TUNNEL=ron1n
 APP=ron1n
 TOKEN_NAME=ron1nos-ios
 SESSIONE=730h
+# SETUP-011: source e IPA per SideStore, che non sa fare il login di Access.
+APP_STORE="ron1n · SideStore"
+POLICY_PUBBLICA="ron1n · pubblico"
 
 info() { printf '    %s\n' "$*"; }
 step() { printf '\033[1;31m==>\033[0m \033[1m%s\033[0m\n' "$*"; }
@@ -179,6 +183,24 @@ corpo=$(jq -nc --arg n "$APP" --arg d "*.$DOMINIO" --arg s "$SESSIONE" --arg a "
 app_id=$(api GET "$ACC/access/apps" | id_per_nome "$APP")
 if [ -n "$app_id" ]; then
   scrivi PUT "$ACC/access/apps/$app_id" "$corpo" >/dev/null
+  info "aggiornata"
+else
+  scrivi POST "$ACC/access/apps" "$corpo" >/dev/null
+  info "creata"
+fi
+
+# Un'applicazione con un percorso preciso vale prima di quella su
+# *.DOMINIO: qui Access lascia passare tutti, solo per questa cartella e
+# quello che contiene.
+step "Access: eccezione per SideStore su ios.$DOMINIO/sidestore/"
+p_pubblica=$(policy "$POLICY_PUBBLICA" "$(jq -nc --arg n "$POLICY_PUBBLICA" \
+  '{name: $n, decision: "bypass", include: [{everyone: {}}]}')")
+corpo=$(jq -nc --arg n "$APP_STORE" --arg d "ios.$DOMINIO/sidestore" --arg p "$p_pubblica" \
+  '{type: "self_hosted", name: $n, domain: $d, app_launcher_visible: false,
+    policies: [{id: $p, precedence: 1}]}')
+store_id=$(api GET "$ACC/access/apps" | id_per_nome "$APP_STORE")
+if [ -n "$store_id" ]; then
+  scrivi PUT "$ACC/access/apps/$store_id" "$corpo" >/dev/null
   info "aggiornata"
 else
   scrivi POST "$ACC/access/apps" "$corpo" >/dev/null

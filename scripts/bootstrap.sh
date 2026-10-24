@@ -422,6 +422,12 @@ ask_stack_env() {
         ask_secret "$key (invio = vuoto)"
         val=$REPLY
         ;;
+      ios:IOS_URL)
+        # Dal dominio di Caddy, se il suo .env c'è già.
+        d=$(env_get "$INFRA_DIR/proxy/.env" DOMINIO 2>/dev/null) || d=
+        val=$(env_get "$tmp" "$key")
+        [ -z "$d" ] || val=https://ios.$d
+        ;;
       ron1nos:DATABASE_URL)
         val="postgres://ron1nos:$(env_get "$INFRA_DIR/postgres/.env" RON1NOS_DB_PASSWORD)@postgres:5432/ron1nos"
         ;;

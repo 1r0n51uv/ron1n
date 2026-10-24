@@ -9,7 +9,7 @@
     "validate:infra": "scripts/validate-infra.sh",
     "check": "npm run format:check && npm run lint:md && npm run lint:sh && npm run test:sh && npm run validate:infra",
     "lint:sh": "shellcheck infra.sh scripts/*.sh infra/*/builder/*.sh",
-    "test:sh": "scripts/test-infra-sh.sh && scripts/test-cloudflare-sh.sh"
+    "test:sh": "scripts/test-infra-sh.sh && scripts/test-cloudflare-sh.sh && scripts/test-ios-build-sh.sh"
   },
   "devDependencies": {
     "markdownlint-cli2": "^0.23.3",

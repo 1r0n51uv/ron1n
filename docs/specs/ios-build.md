@@ -64,3 +64,55 @@ Accettazione:
       build) e toglie l'immagine del builder insieme alle altre.
 - [x] `infra/ios/README.md` spiega come scaricare `Xcode.xip`, installare
       l'SDK, fare una build e installarla con SideStore.
+
+### IOSB-003 · Source di SideStore
+
+Stato: in corso
+
+Gli aggiornamenti arrivano in SideStore da una source, come per le app
+dello store: si aggiunge una volta e a ogni nuova versione SideStore
+propone Update. La source è un file statico che scrive il builder, senza
+servizi in più.
+
+Accettazione:
+
+- [ ] `build` legge da `git rev-list --count HEAD` il numero di commit N
+      e lo scrive nell'Info.plist dell'app (`infoPath` di `xtool.yml`)
+      prima di compilare: `CFBundleVersion` = N e
+      `CFBundleShortVersionString` = `major.minor.N`, con major e minor
+      presi dal plist. A ogni commit la versione sale.
+- [ ] Una build di `main` copia l'IPA in `IOS_DIR/builds/sidestore` e
+      riscrive lì `source.json`, nel formato delle source di AltStore e
+      SideStore: nome, bundle id (da `xtool.yml`), versione, build, data,
+      dimensione e link assoluto all'IPA, che ha il commit nel nome. Ci
+      sono anche i campi vecchi (`version`, `downloadURL`, `size`) per
+      le versioni precedenti di SideStore. Una build di un altro ref non
+      tocca la source.
+- [ ] La source si aggiunge in SideStore con
+      `https://ios.DOMINIO/sidestore/source.json`; l'indirizzo viene da
+      `IOS_URL` in `infra/ios/.env`, che il bootstrap ricava da
+      `DOMINIO`. La cartella è fuori da Cloudflare Access (SETUP-011).
+- [ ] Anche in `sidestore` restano le ultime 5 IPA.
+- [ ] Test senza xtool in `scripts/test-ios-build-sh.sh`, dentro
+      `npm run check`: numero di versione, `source.json` e pulizia.
+
+### IOSB-004 · Build automatica a ogni commit
+
+Stato: in corso
+
+Dopo il merge di una PR dell'app non serve lanciare niente: il server se
+ne accorge, compila e aggiorna la source.
+
+Accettazione:
+
+- [ ] Lo stack `ios` ha un servizio `ios-autobuild`, con l'immagine del
+      builder, che parte con `./infra.sh up` e resta acceso con
+      `ios-build segui`: ogni `IOS_INTERVALLO` secondi (300 di default)
+      legge l'ultimo commit di main con `git ls-remote` e, se non è quello
+      già pubblicato, lancia `build main`.
+- [ ] Una build fallita non si ritenta finché non arriva un commit nuovo;
+      senza SDK aspetta e lo scrive nel log, senza fermarsi.
+- [ ] Una build alla volta: una build a mano e quella automatica si
+      aspettano (lock su `IOS_DIR/.build.lock`).
+- [ ] Niente da installare sull'host: è un container dello stack, quindi
+      il cleanup lo toglie con gli stack e le immagini.
