@@ -24,7 +24,8 @@ command -v jq >/dev/null || {
   exit 1
 }
 
-export WORK="$tmp/work" IOS_URL=https://ios.esempio.it IOS_BUILD_LIB=1
+printf 'png finto' >"$tmp/icon.png"
+export WORK="$tmp/work" IOS_URL=https://ios.esempio.it IOS_ICON="$tmp/icon.png" IOS_BUILD_LIB=1
 # shellcheck source=/dev/null
 . "$ROOT/infra/ios/builder/ios-build.sh"
 
@@ -61,6 +62,9 @@ check "url della source" test "$(jq -r .sourceURL "$src")" = https://ios.esempio
 check "bundle id" test "$(jq -r '.apps[0].bundleIdentifier' "$src")" = home.ron1n.ios
 check "versione e build" test "$(jq -r '.apps[0].versions[0] | "\(.version) \(.buildVersion)"' "$src")" = "0.1.19 19"
 check "url dell'IPA" test "$(jq -r '.apps[0].versions[0].downloadURL' "$src")" = https://ios.esempio.it/sidestore/Ron1nOS-abc1234.ipa
+check "icona dell'app" test "$(jq -r '.apps[0].iconURL' "$src")" = https://ios.esempio.it/sidestore/icon.png
+check "icona della source" test "$(jq -r .iconURL "$src")" = https://ios.esempio.it/sidestore/icon.png
+check "icona nella cartella pubblica" test -f "$WORK/builds/sidestore/icon.png"
 check "dimensione" test "$(jq -r '.apps[0].versions[0].size' "$src")" = 9
 check "campi per le versioni vecchie di SideStore" test "$(jq -r '.apps[0].version' "$src")" = 0.1.19
 check "commit pubblicato" test "$(cat "$WORK/builds/sidestore/.commit")" = abc1234

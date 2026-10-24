@@ -83,8 +83,10 @@ Accettazione:
       presi dal plist. A ogni commit la versione sale.
 - [ ] Una build di `main` copia l'IPA in `IOS_DIR/builds/sidestore` e
       riscrive lì `source.json`, nel formato delle source di AltStore e
-      SideStore: nome, bundle id (da `xtool.yml`), versione, build, data,
-      dimensione e link assoluto all'IPA, che ha il commit nel nome. Ci
+      SideStore: nome, bundle id (da `xtool.yml`), icona (`iconURL`,
+      obbligatoria per SideStore, `icon.png` dall'immagine del builder),
+      versione, build, data, dimensione e link assoluto all'IPA, che ha il
+      commit nel nome. Ci
       sono anche i campi vecchi (`version`, `downloadURL`, `size`) per
       le versioni precedenti di SideStore. Una build di un altro ref non
       tocca la source.
@@ -94,7 +96,7 @@ Accettazione:
       `DOMINIO`. La cartella è fuori da Cloudflare Access (SETUP-011).
 - [ ] Anche in `sidestore` restano le ultime 5 IPA.
 - [ ] Test senza xtool in `scripts/test-ios-build-sh.sh`, dentro
-      `npm run check`: numero di versione, `source.json` e pulizia.
+      `npm run check`: numero di versione, `source.json` con l'icona e pulizia.
 
 ### IOSB-004 · Build automatica a ogni commit
 
