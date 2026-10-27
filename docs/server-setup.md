@@ -11,6 +11,21 @@ indirizzi dei servizi e dove stanno i `.env`.
 curl -fsSL https://raw.githubusercontent.com/1r0n51uv/ron1n/main/scripts/bootstrap.sh | sh
 ```
 
+Prima di cominciare chiede cosa configurare, una voce alla volta
+(SETUP-013): aggiornamenti automatici, Docker, gruppi dell'utente,
+Tailscale, regole SSH, firewall, repo, `.env` e avvio degli stack. Senza
+domande, con le opzioni (`--help` le elenca tutte):
+
+```sh
+# tutto tranne Tailscale e SSH
+curl -fsSL https://raw.githubusercontent.com/1r0n51uv/ron1n/main/scripts/bootstrap.sh | sh -s -- --skip tailscale,ssh
+# solo aggiornare il repo e riavviare gli stack
+sudo sh /opt/ron1n/scripts/bootstrap.sh --only repo,stack
+```
+
+Su Debian in WSL Tailscale, SSH e firewall sono spenti di default; senza
+systemd Docker parte con `service docker start` e Tailscale si salta.
+
 Per usare i servizi dai client vedi [Accesso da fuori con Cloudflare](#accesso-da-fuori-con-cloudflare).
 
 Per tornare indietro, `sudo /opt/ron1n/scripts/cleanup.sh` chiede cosa
