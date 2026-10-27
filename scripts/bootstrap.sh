@@ -4,18 +4,10 @@
 #
 #   curl -fsSL https://raw.githubusercontent.com/1r0n51uv/ron1n/main/scripts/bootstrap.sh | sh
 #
-# Da root (`su -`). Prima del primo avvio chiede i valori dei .env degli
-# stack (invio = default, password casuali). Si può rilanciare: rifà solo
-# ciò che manca, non tocca i .env esistenti né i dati degli stack. Niente
-# backup, per scelta.
-#
-# Variabili d'ambiente facoltative:
-#   RON1N_USER      utente amministratore (default: il primo con UID >= 1000)
-#   TS_AUTHKEY      chiave Tailscale; senza, lo script mostra il link di login
-#   RON1N_REPO      repo da clonare (default: https://github.com/1r0n51uv/ron1n)
-#   RON1N_BRANCH    branch (default: main)
-#   RON1N_DIR       cartella del repo (default: /opt/ron1n)
-#   RON1N_SKIP_TAILSCALE=1  salta Tailscale (prove)
+# Da root (`su -`). Prima chiede cosa configurare, poi i valori dei .env
+# degli stack (invio = default, password casuali). Si può rilanciare: rifà
+# solo ciò che manca, non tocca i .env esistenti né i dati degli stack.
+# Niente backup, per scelta. Opzioni e voci: --help (SETUP-013).
 set -eu
 
 RON1N_REPO=${RON1N_REPO:-https://github.com/1r0n51uv/ron1n}
@@ -56,6 +48,188 @@ rand() {
   od -An -N24 -tx1 /dev/urandom | tr -d ' \n'
 }
 
+# Le voci che si possono scegliere (SETUP-013), nell'ordine in cui girano.
+# Controllo del sistema e pacchetti di base si fanno sempre.
+VOCI="aggiornamenti docker gruppi tailscale ssh firewall repo env stack"
+
+usage() {
+  cat <<'EOF'
+Uso: bootstrap.sh [--skip voci] [--only voci] [--yes]
+
+Con un terminale e senza opzioni chiede le voci una alla volta.
+
+  --skip a,b   salta queste voci (anche RON1N_SKIP=a,b)
+  --only a,b   fa solo queste voci (anche RON1N_ONLY=a,b)
+  --yes        niente menu: le voci di default, meno quelle saltate
+
+Voci:
+  aggiornamenti  aggiornamenti di sicurezza automatici
+  docker         Docker Engine e Compose
+  gruppi         utente amministratore in sudo e docker
+  tailscale      Tailscale con Tailscale SSH (serve systemd)
+  ssh            niente login di root né password se c'è una chiave
+  firewall       ufw e filtro delle porte dei container
+  repo           clone o aggiornamento del repo
+  env            i .env degli stack chiesti sul terminale
+  stack          avvio di tutto con ./infra.sh up
+
+Di default tutte; in WSL senza tailscale, ssh e firewall.
+
+Con curl: curl -fsSL .../bootstrap.sh | sh -s -- --skip tailscale,ssh
+
+Variabili d'ambiente facoltative:
+  RON1N_USER    utente amministratore (default: il primo con UID >= 1000)
+  TS_AUTHKEY    chiave Tailscale; senza, lo script mostra il link di login
+  RON1N_REPO    repo da clonare (default: https://github.com/1r0n51uv/ron1n)
+  RON1N_BRANCH  branch (default: main)
+  RON1N_DIR     cartella del repo (default: /opt/ron1n)
+  RON1N_WSL     1 o 0 al posto del riconoscimento di WSL
+  RON1N_SKIP_TAILSCALE=1  come --skip tailscale
+EOF
+}
+
+describe_voce() {
+  case $1 in
+    aggiornamenti) echo "Aggiornamenti di sicurezza automatici" ;;
+    docker) echo "Docker Engine e Compose" ;;
+    gruppi) echo "Utente amministratore in sudo e docker" ;;
+    tailscale) echo "Tailscale con Tailscale SSH" ;;
+    ssh) echo "Regole SSH (niente root, niente password con una chiave)" ;;
+    firewall) echo "Firewall ufw" ;;
+    repo) echo "Repo in $RON1N_DIR" ;;
+    env) echo "I .env degli stack, chiesti qui" ;;
+    stack) echo "Avvio degli stack" ;;
+  esac
+}
+
+is_wsl() {
+  case ${RON1N_WSL:-} in
+    1) return 0 ;;
+    0) return 1 ;;
+  esac
+  [ -n "${WSL_DISTRO_NAME:-}" ] || grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null
+}
+
+has_systemd() { [ -d /run/systemd/system ]; }
+
+# Avvia e abilita un servizio; senza systemd (WSL) con service.
+start_service() {
+  if has_systemd; then
+    systemctl enable --now "$1" >/dev/null
+  else
+    service "$1" start >/dev/null 2>&1 || info "non riesco ad avviare $1: senza systemd va avviato a mano"
+  fi
+}
+
+in_list() {
+  case " $2 " in *" $1 "*) return 0 ;; esac
+  return 1
+}
+
+scelta() { in_list "$1" "$SCELTE"; }
+
+# Le voci di $2 nell'ordine di VOCI, meno quelle di $3.
+voci_filtra() {
+  out=
+  for v in $VOCI; do
+    if in_list "$v" "$1" && ! in_list "$v" "${2:-}"; then out="$out $v"; fi
+  done
+  echo "${out# }"
+}
+
+# Un elenco con virgole o spazi, controllato: una voce sconosciuta ferma
+# tutto prima di toccare qualcosa.
+parse_voci() {
+  out=
+  for v in $(printf '%s' "$1" | tr ',' ' '); do
+    in_list "$v" "$VOCI" || die "voce sconosciuta: $v (voci: $VOCI)"
+    out="$out $v"
+  done
+  echo "${out# }"
+}
+
+default_voci() {
+  if is_wsl; then
+    voci_filtra "$VOCI" "tailscale ssh firewall"
+  else
+    echo "$VOCI"
+  fi
+}
+
+# Opzioni e variabili d'ambiente in SCELTE; CHIEDI=1 se va mostrato il
+# menu (nessuna scelta esplicita).
+parse_args() {
+  only=${RON1N_ONLY:-}
+  skip=${RON1N_SKIP:-}
+  [ "${RON1N_SKIP_TAILSCALE:-0}" != 1 ] || skip="$skip,tailscale"
+  yes=0
+  while [ $# -gt 0 ]; do
+    case $1 in
+      -y | --yes) yes=1 ;;
+      --only | --skip)
+        [ $# -ge 2 ] || die "$1 vuole un elenco di voci (vedi --help)"
+        if [ "$1" = --only ]; then only="$only,$2"; else skip="$skip,$2"; fi
+        shift
+        ;;
+      --only=*) only="$only,${1#*=}" ;;
+      --skip=*) skip="$skip,${1#*=}" ;;
+      -h | --help)
+        usage
+        exit 0
+        ;;
+      *) die "opzione sconosciuta: $1 (vedi --help)" ;;
+    esac
+    shift
+  done
+  only=$(parse_voci "$only") || exit 1
+  skip=$(parse_voci "$skip") || exit 1
+  CHIEDI=1
+  [ "$yes" = 0 ] && [ -z "$only" ] && [ -z "$skip" ] || CHIEDI=0
+  if [ -n "$only" ]; then
+    SCELTE=$(voci_filtra "$only" "$skip")
+  else
+    SCELTE=$(voci_filtra "$(default_voci)" "$skip")
+  fi
+}
+
+# Il menu: una domanda per voce, col default già scelto.
+choose() {
+  [ "$CHIEDI" = 1 ] && have_tty || return 0
+  step "Cosa configuro"
+  info "Rispondi s o n; invio = il valore tra parentesi."
+  nuove=
+  for v in $VOCI; do
+    d=n
+    ! scelta "$v" || d=s
+    ask "$(describe_voce "$v")? (s/n)" "$d"
+    case $REPLY in
+      s | S | si | sì) nuove="$nuove $v" ;;
+    esac
+  done
+  SCELTE=${nuove# }
+}
+
+# Le dipendenze fra le voci, prima di cominciare.
+check_voci() {
+  step "Voci"
+  if scelta tailscale && ! has_systemd; then
+    info "tailscale saltata: serve systemd"
+    SCELTE=$(voci_filtra "$SCELTE" tailscale)
+  fi
+  [ -n "$SCELTE" ] || die "nessuna voce scelta, non ho toccato niente"
+  for v in env stack; do
+    if scelta "$v" && ! scelta repo && [ ! -d "$RON1N_DIR/.git" ]; then
+      die "$v vuole il repo in $RON1N_DIR: aggiungi la voce repo"
+    fi
+  done
+  if scelta stack && ! scelta docker && ! command -v docker >/dev/null; then
+    die "stack vuole Docker: aggiungi la voce docker"
+  fi
+  info "faccio: $SCELTE"
+  saltate=$(voci_filtra "$VOCI" "$SCELTE")
+  [ -z "$saltate" ] || info "salto: $saltate"
+}
+
 check_system() {
   step "Controllo del sistema"
   [ "$(id -u)" -eq 0 ] || die "va eseguito da root: su - poi rilancia il comando"
@@ -67,6 +241,8 @@ check_system() {
   fi
   [ "$(dpkg --print-architecture)" = amd64 ] || die "serve un sistema amd64"
   info "${PRETTY_NAME}"
+  ! is_wsl || info "WSL: tailscale, ssh e firewall spente di default"
+  has_systemd || info "senza systemd: i servizi partono con service"
 }
 
 find_user() {
@@ -87,7 +263,12 @@ find_user() {
 install_base() {
   step "Pacchetti base"
   apt-get update -q </dev/null
-  apt_install ca-certificates curl git jq sudo openssl ufw lm-sensors unattended-upgrades
+  apt_install ca-certificates curl git jq sudo openssl lm-sensors
+}
+
+setup_updates() {
+  step "Aggiornamenti automatici"
+  apt_install unattended-upgrades
   cat >/etc/apt/apt.conf.d/20auto-upgrades <<'EOF'
 APT::Periodic::Update-Package-Lists "1";
 APT::Periodic::Unattended-Upgrade "1";
@@ -120,7 +301,7 @@ docker_on_srv() {
     mount "$target"
     info "$target su /srv/$d"
   done
-  systemctl daemon-reload
+  ! has_systemd || systemctl daemon-reload
 }
 
 install_docker() {
@@ -150,23 +331,21 @@ EOF
   fi
   apt-get update -q </dev/null
   apt_install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-  systemctl enable --now docker >/dev/null
+  start_service docker
   info "$(docker --version)"
   info "$(docker compose version)"
 }
 
 setup_user() {
   step "Gruppi dell'utente"
-  usermod -aG sudo,docker "$ADMIN"
-  info "$ADMIN è in sudo e docker (vale dal prossimo login)"
+  groups=sudo
+  ! getent group docker >/dev/null || groups=sudo,docker
+  usermod -aG "$groups" "$ADMIN"
+  info "$ADMIN è in $groups (vale dal prossimo login)"
 }
 
 install_tailscale() {
   step "Tailscale"
-  if [ "${RON1N_SKIP_TAILSCALE:-0}" = 1 ]; then
-    info "saltato (RON1N_SKIP_TAILSCALE=1)"
-    return 0
-  fi
   if ! command -v tailscale >/dev/null; then
     curl -fsSL https://pkgs.tailscale.com/stable/debian/trixie.noarmor.gpg \
       -o /usr/share/keyrings/tailscale-archive-keyring.gpg
@@ -205,11 +384,16 @@ setup_ssh() {
   fi
   mv "$conf.tmp" "$conf"
   sshd -t || die "configurazione SSH non valida, controlla $conf"
-  systemctl reload ssh
+  if has_systemd; then
+    systemctl reload ssh
+  else
+    service ssh reload >/dev/null 2>&1 || info "SSH non è attivo: le regole valgono al prossimo avvio"
+  fi
 }
 
 setup_firewall() {
   step "Firewall"
+  command -v ufw >/dev/null || apt_install ufw
   ext_if=$(ip route show default | awk '{ print $5; exit }')
   [ -n "$ext_if" ] || die "non trovo l'interfaccia di rete principale"
   torrent_port=6881
@@ -509,6 +693,12 @@ start_stacks() {
 
 summary() {
   step "Fatto"
+  info "voci fatte: $SCELTE"
+  if scelta stack; then summary_stack; fi
+  documents_key_note
+}
+
+summary_stack() {
   proxy=$RON1N_DIR/infra/proxy
   dominio=$(env_get "$proxy/.env" DOMINIO)
   # I nomi dei siti dai matcher del Caddyfile (@nome host ...).
@@ -537,26 +727,32 @@ summary() {
   else
     echo "    ron1nOS      login spento: protetta solo da Cloudflare Access"
   fi
-  if [ "${DOCUMENTS_KEY_NEW:-0}" = 1 ]; then
-    echo
-    echo "  Salva DOCUMENTS_KEY (in infra/ron1nos/.env) in un password manager:"
-    echo "  senza, i documenti di ron1nOS non si leggono più."
-  fi
   echo "  Stato dei container: docker ps (dopo un nuovo login di $ADMIN, o con sudo)."
 }
 
+documents_key_note() {
+  [ "${DOCUMENTS_KEY_NEW:-0}" = 1 ] || return 0
+  echo
+  echo "  Salva DOCUMENTS_KEY (in infra/ron1nos/.env) in un password manager:"
+  echo "  senza, i documenti di ron1nOS non si leggono più."
+}
+
 main() {
+  parse_args "$@"
   check_system
   find_user
+  choose
+  check_voci
   install_base
-  install_docker
-  setup_user
-  install_tailscale
-  setup_ssh
-  clone_repo
-  ask_envs
-  setup_firewall
-  start_stacks
+  if scelta aggiornamenti; then setup_updates; fi
+  if scelta docker; then install_docker; fi
+  if scelta gruppi; then setup_user; fi
+  if scelta tailscale; then install_tailscale; fi
+  if scelta ssh; then setup_ssh; fi
+  if scelta repo; then clone_repo; fi
+  if scelta env; then ask_envs; fi
+  if scelta firewall; then setup_firewall; fi
+  if scelta stack; then start_stacks; fi
   summary
 }
 

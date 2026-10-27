@@ -323,3 +323,43 @@ Accettazione:
       per git e `infra.sh`, e spiegano il passaggio per un server già
       installato.
 - [ ] Il cleanup non cambia: toglie il repo come prima, di chiunque sia.
+
+### SETUP-013 · Bootstrap a scelta
+
+Stato: in corso
+
+Il bootstrap non configura per forza tutto: si sceglie quali parti fare.
+Serve per rilanciarlo solo per un pezzo e per provarlo su sistemi che non
+sono il mini PC, come Debian in WSL, dove Tailscale, regole SSH e firewall
+non servono o non funzionano.
+
+Accettazione:
+
+- [ ] Le parti sono voci con un nome: `aggiornamenti` (aggiornamenti di
+      sicurezza automatici), `docker`, `gruppi` (utente in `sudo` e
+      `docker`), `tailscale`, `ssh`, `firewall`, `repo`, `env` (i `.env`
+      chiesti sul terminale), `stack` (`./infra.sh up`). Controllo del
+      sistema e pacchetti di base si fanno sempre.
+- [ ] Con un terminale e senza opzioni, prima di cominciare chiede le voci
+      una alla volta (s/n, invio = default) e mostra il riepilogo.
+- [ ] Opzioni: `--skip tailscale,ssh` toglie voci, `--only repo,stack` fa
+      solo quelle, `--yes` prende le voci di default senza menu. Le stesse
+      scelte con `RON1N_SKIP` e `RON1N_ONLY`; `RON1N_SKIP_TAILSCALE=1`
+      vale ancora. Con `curl … | sh -s -- --skip tailscale,ssh`. Una voce
+      sconosciuta ferma lo script prima di toccare qualcosa.
+- [ ] Di default tutte le voci sono accese; in WSL (`WSL_DISTRO_NAME` o
+      `microsoft` nel kernel) `tailscale`, `ssh` e `firewall` sono
+      spente.
+- [ ] Senza systemd le voci che ne hanno bisogno (`tailscale`) si saltano
+      con un avviso; Docker si avvia con `service` se systemd non c'è.
+- [ ] Le dipendenze si controllano prima di partire: `env` e `stack`
+      vogliono il repo in `RON1N_DIR` (clonato ora o già presente) e
+      `stack` vuole il comando `docker`; altrimenti lo script si ferma e
+      dice quale voce aggiungere.
+- [ ] `ufw` si installa solo con la voce `firewall`, `unattended-upgrades`
+      solo con `aggiornamenti`. Il riepilogo finale parla solo delle voci
+      fatte.
+- [ ] Il cleanup non cambia: ogni sua voce toglie ciò che c'è, che il
+      bootstrap l'abbia messo o no.
+- [ ] Test della scelta delle voci in `scripts/test-bootstrap-sh.sh`,
+      dentro `npm run check`.
