@@ -25,6 +25,9 @@ Contesto per le sessioni di Claude che lavorano su questo repo.
 - Flusso di sviluppo delle app (specifica → issue con label → PR con CI →
   immagine GHCR → Watchtower): `docs/flusso-sviluppo.md`. Il template per un
   nuovo repo app è in `templates/app/`.
+- Ogni PR aggiunge in cima a `CHANGELOG.md` una riga su cosa cambia, con il
+  link alla PR, sotto la sezione del giorno (`## AAAA-MM-GG`). Regole in
+  `docs/flusso-sviluppo.md` › CHANGELOG.
 - Prima di consegnare: `npm run check` pulito (Prettier, markdownlint,
   shellcheck e test di `infra.sh`, validazione di `infra/`). La CI fa anche `caddy validate` e actionlint.
 - Le regole di lint, formato e test delle app sono in

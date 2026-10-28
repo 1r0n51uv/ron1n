@@ -77,6 +77,10 @@ In SideStore, una volta sola: **Sources → +** e
 versione compare **Update** in **My Apps**: lo tocchi e SideStore scarica,
 firma e installa sopra quella vecchia, senza perdere i dati.
 
+Sotto ogni versione SideStore mostra le novità: la sezione della versione
+nel `CHANGELOG.md` dell'app o, se manca, i titoli dei commit nuovi
+(IOSB-005).
+
 ## Installazione sul telefono
 
 Da Safari (al primo accesso Cloudflare Access chiede il codice via mail): `https://ios.ron1n.space`, tocca l'IPA, poi
