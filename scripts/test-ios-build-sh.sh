@@ -110,14 +110,14 @@ cat >"$repo/CHANGELOG.md" <<'MD'
 
 - Tab bar a pillola in vetro.
 
-- Testi rossi più leggibili.
+- Testi rossi più leggibili ([#5](https://esempio.it/5)).
 
 ## 0.1.2 · 2026-10-27
 
 - Altro.
 MD
 note=$(cd "$repo" && note_versione 0.1.3 "")
-check "note dal CHANGELOG" test "$note" = "$(printf -- '- Tab bar a pillola in vetro.\n- Testi rossi più leggibili.')"
+check "note dal CHANGELOG" test "$note" = "$(printf -- '- Tab bar a pillola in vetro.\n- Testi rossi più leggibili (#5).')"
 note=$(cd "$repo" && note_versione 0.1.9 "")
 check "versione non nel CHANGELOG: commit" test "$note" = "- Terzo (#3)"
 pubblica "$tmp/app.ipa" Ron1nOS home.ron1n.ios 0.1.3 3 def5678 "$(printf 'riga "uno"\nriga due')" >/dev/null

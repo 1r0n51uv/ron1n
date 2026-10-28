@@ -132,7 +132,8 @@ json_str() {
 }
 
 # note_versione VERSIONE [DA]: le novità della versione per SideStore
-# (IOSB-005). Prima la sezione `## VERSIONE` del CHANGELOG.md dei sorgenti;
+# (IOSB-005). Prima la sezione `## VERSIONE` del CHANGELOG.md dei sorgenti,
+# con i link Markdown ridotti al testo, perché SideStore non li mostra;
 # se non c'è, i titoli dei commit dopo DA, l'ultimo pubblicato (al massimo
 # 20), o il solo ultimo commit. Si lancia dentro i sorgenti.
 note_versione() {
@@ -140,7 +141,7 @@ note_versione() {
     note=$(awk -v v="$1" '
       /^## / { if (dentro) exit; if ($2 == v) { dentro = 1; next } }
       dentro && NF { print }
-    ' CHANGELOG.md)
+    ' CHANGELOG.md | sed 's/\[\([^]]*\)\]([^)]*)/\1/g')
     if [ -n "$note" ]; then
       printf '%s\n' "$note"
       return

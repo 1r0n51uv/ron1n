@@ -130,7 +130,7 @@ Accettazione:
 - [x] Le note della versione (`versions[].localizedDescription` di
       `source.json`) sono la sezione `## <versione>` del `CHANGELOG.md`
       dell'app, per esempio `## 0.1.62 · 2026-10-28`, senza le righe
-      vuote.
+      vuote e con i link Markdown ridotti al loro testo.
 - [x] Se il CHANGELOG manca o non ha la versione, le note sono i titoli
       dei commit dopo l'ultima versione pubblicata (al massimo 20), o il
       titolo dell'ultimo commit.
