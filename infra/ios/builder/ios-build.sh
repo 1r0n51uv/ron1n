@@ -125,12 +125,37 @@ versiona() {
   set_plist "$1" CFBundleVersion "$2"
 }
 
-# json_str TESTO: TESTO tra virgolette, con \ e " protetti.
-json_str() { printf '"%s"' "$(printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g')"; }
+# json_str TESTO: TESTO tra virgolette, con \, ", tab e a capo protetti.
+json_str() {
+  printf '"%s"' "$(printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g' |
+    awk 'NR > 1 { printf "%s", "\\n" } { printf "%s", $0 }')"
+}
 
-# pubblica IPA APP BUNDLE VERSIONE BUILD SHA: copia l'IPA in STORE e
-# riscrive source.json nel formato delle source di AltStore e SideStore,
-# con la sola ultima versione (IOSB-003).
+# note_versione VERSIONE [DA]: le novità della versione per SideStore
+# (IOSB-005). Prima la sezione `## VERSIONE` del CHANGELOG.md dei sorgenti;
+# se non c'è, i titoli dei commit dopo DA, l'ultimo pubblicato (al massimo
+# 20), o il solo ultimo commit. Si lancia dentro i sorgenti.
+note_versione() {
+  if [ -f CHANGELOG.md ]; then
+    note=$(awk -v v="$1" '
+      /^## / { if (dentro) exit; if ($2 == v) { dentro = 1; next } }
+      dentro && NF { print }
+    ' CHANGELOG.md)
+    if [ -n "$note" ]; then
+      printf '%s\n' "$note"
+      return
+    fi
+  fi
+  if [ -n "${2:-}" ] && git cat-file -e "$2^{commit}" 2>/dev/null; then
+    git log --format='- %s' --max-count=20 "$2..HEAD"
+  else
+    git log --format='- %s' -1
+  fi
+}
+
+# pubblica IPA APP BUNDLE VERSIONE BUILD SHA [NOTE]: copia l'IPA in STORE
+# e riscrive source.json nel formato delle source di AltStore e SideStore,
+# con la sola ultima versione (IOSB-003) e le sue novità (IOSB-005).
 pubblica() {
   mkdir -p "$STORE"
   nome=$2-$6.ipa
@@ -163,7 +188,7 @@ pubblica() {
           "version": $(json_str "$4"),
           "buildVersion": $(json_str "$5"),
           "date": "$data",
-          "localizedDescription": $(json_str "Commit $6"),
+          "localizedDescription": $(json_str "${7:-Commit $6}"),
           "downloadURL": $(json_str "$url"),
           "size": $size
         }
@@ -230,7 +255,9 @@ cmd_build() {
   # Solo main va nella source: un branch di prova non diventa un update.
   if [ "$ref" = main ] && [ -n "$VERSIONE" ] && [ -n "$bundle" ]; then
     step "Source di SideStore"
-    pubblica "$1" "$app" "$bundle" "$VERSIONE" "$n" "$sha"
+    prima=$(cat "$STORE/.commit" 2>/dev/null) || prima=
+    note=$(note_versione "$VERSIONE" "$prima")
+    pubblica "$1" "$app" "$bundle" "$VERSIONE" "$n" "$sha" "$note"
     info "$IOS_URL/sidestore/source.json, versione $VERSIONE"
   fi
 }

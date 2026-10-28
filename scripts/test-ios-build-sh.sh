@@ -1,6 +1,7 @@
 #!/bin/sh
-# Test delle parti del builder iOS che non chiedono xtool (IOSB-003): numero
-# di versione nell'Info.plist, source.json di SideStore e pulizia delle IPA.
+# Test delle parti del builder iOS che non chiedono xtool (IOSB-003, IOSB-005):
+# numero di versione nell'Info.plist, source.json di SideStore con le novità
+# della versione e pulizia delle IPA.
 set -eu
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
@@ -82,6 +83,45 @@ check "tenuta la più recente" test -f "$WORK/builds/sidestore/Ron1nOS-sha6.ipa"
 check "source sull'ultima" test "$(jq -r '.apps[0].version' "$src")" = 0.1.6
 
 check "testo con virgolette in JSON" test "$(json_str 'a"b\c')" = '"a\"b\\c"'
+check "a capo in JSON" test "$(json_str "$(printf 'uno\ndue')")" = '"uno\ndue"'
+
+# Le novità della versione (IOSB-005): dalla sezione del CHANGELOG, se no
+# dai commit dopo l'ultimo pubblicato.
+repo=$tmp/repo
+mkdir -p "$repo"
+(
+  cd "$repo"
+  git init -q
+  git config user.email test@esempio.it
+  git config user.name test
+  git commit -q --allow-empty -m "Primo"
+  git rev-parse --short=7 HEAD >"$tmp/primo"
+  git commit -q --allow-empty -m "Secondo (#2)"
+  git commit -q --allow-empty -m "Terzo (#3)"
+)
+note=$(cd "$repo" && note_versione 0.1.3 "$(cat "$tmp/primo")")
+check "note dai commit dopo l'ultimo pubblicato" test "$note" = "$(printf -- '- Terzo (#3)\n- Secondo (#2)')"
+note=$(cd "$repo" && note_versione 0.1.3 "")
+check "senza pubblicato solo l'ultimo commit" test "$note" = "- Terzo (#3)"
+cat >"$repo/CHANGELOG.md" <<'MD'
+# Changelog
+
+## 0.1.3 · 2026-10-28
+
+- Tab bar a pillola in vetro.
+
+- Testi rossi più leggibili.
+
+## 0.1.2 · 2026-10-27
+
+- Altro.
+MD
+note=$(cd "$repo" && note_versione 0.1.3 "")
+check "note dal CHANGELOG" test "$note" = "$(printf -- '- Tab bar a pillola in vetro.\n- Testi rossi più leggibili.')"
+note=$(cd "$repo" && note_versione 0.1.9 "")
+check "versione non nel CHANGELOG: commit" test "$note" = "- Terzo (#3)"
+pubblica "$tmp/app.ipa" Ron1nOS home.ron1n.ios 0.1.3 3 def5678 "$(printf 'riga "uno"\nriga due')" >/dev/null
+check "note nella source" test "$(jq -r '.apps[0].versions[0].localizedDescription' "$src")" = "$(printf 'riga "uno"\nriga due')"
 
 [ "$fails" = 0 ] || {
   echo "$fails test falliti"

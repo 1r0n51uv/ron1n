@@ -11,6 +11,8 @@ https://github.com/1r0n51uv/ron1n/blob/main/docs/flusso-sviluppo.md.
   `mod:*` e `prio:*` di `.github/labels.yml`.
 - Una PR per issue, con `Closes #N`; nella stessa PR aggiorna lo stato del
   requisito a `fatto (#PR)`.
+- Ogni PR aggiunge in cima a `CHANGELOG.md` una riga su cosa cambia, con il
+  link alla PR, sotto la sezione del giorno (`## AAAA-MM-GG`).
 - Ogni PR porta i suoi test: unit (Vitest, `*.test.ts(x)` accanto al file)
   e almeno uno scenario e2e (Playwright, `e2e/`) per ciò che l'utente vede.
 - Lo stile lo decide Prettier (`npm run format`); ESLint con zero warning.

@@ -18,7 +18,7 @@ services:
   # Compila main a ogni commit nuovo e lo pubblica nella source di
   # SideStore. IOSB-003, IOSB-004.
   ios-autobuild:
-    image: ron1n/ios-builder:xtool-1.22.2-r3
+    image: ron1n/ios-builder:xtool-1.22.2-r4
     build: ./builder
     # L'immagine è solo locale: ./infra.sh up la costruisce (dalla cache)
     # invece di cercarla su Docker Hub.
@@ -37,7 +37,7 @@ services:
   # Swift e xtool: docker compose run --rm ios-builder sdk | build [ref].
   # Con il profilo build non parte con ./infra.sh up. IOSB-001.
   ios-builder:
-    image: ron1n/ios-builder:xtool-1.22.2-r3
+    image: ron1n/ios-builder:xtool-1.22.2-r4
     build: ./builder
     profiles: ["build"]
     user: "${PUID:-1000}:${PGID:-1000}"

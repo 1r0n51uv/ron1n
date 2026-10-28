@@ -118,3 +118,25 @@ Accettazione:
       aspettano (lock su `IOS_DIR/.build.lock`).
 - [ ] Niente da installare sull'host: è un container dello stack, quindi
       il cleanup lo toglie con gli stack e le immagini.
+
+### IOSB-005 · Novità della versione
+
+Stato: fatto (#67) · Richiesta del proprietario il 2026-10-28
+
+In SideStore ogni versione mostra cosa cambia, non solo il commit.
+
+Accettazione:
+
+- [x] Le note della versione (`versions[].localizedDescription` di
+      `source.json`) sono la sezione `## <versione>` del `CHANGELOG.md`
+      dell'app, per esempio `## 0.1.62 · 2026-10-28`, senza le righe
+      vuote.
+- [x] Se il CHANGELOG manca o non ha la versione, le note sono i titoli
+      dei commit dopo l'ultima versione pubblicata (al massimo 20), o il
+      titolo dell'ultimo commit.
+- [x] `json_str` protegge anche a capo e tab, così le note su più righe
+      restano JSON valido.
+- [x] Test in `scripts/test-ios-build-sh.sh`: note dal CHANGELOG, dai
+      commit e nella source.
+- [x] Immagine del builder `xtool-1.22.2-r4`: sul server serve
+      `git pull --ff-only` e `./infra.sh up`.

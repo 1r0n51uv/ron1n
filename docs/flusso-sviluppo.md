@@ -62,6 +62,8 @@ del modulo.
 - Un branch e una PR per issue, con `Closes #N` nel corpo
   ([template](../templates/app/.github/pull_request_template.md)).
 - Nella stessa PR lo stato del requisito passa a `fatto`.
+- Nella stessa PR una riga nel `CHANGELOG.md` del repo, in cima, che dice
+  cosa cambia per chi usa l'app (vedi sotto).
 - `ci.yml` gira su ogni PR: install, controllo del formato, lint,
   typecheck, test unit, build, test e2e e build dell'immagine Docker senza
   push. Gli stessi passi, in ordine, sono `npm run check` in locale.
@@ -121,6 +123,20 @@ di Markdown, YAML e JSON con Prettier, lint del Markdown con markdownlint,
 `docker compose config` su ogni stack di `infra/` (con i valori di
 `.env.example`), `caddy validate` e `caddy fmt` sul Caddyfile, actionlint
 sui workflow, compresi quelli del template.
+
+### CHANGELOG
+
+Ogni repo ha un `CHANGELOG.md` con la versione più recente in alto e, per
+ognuna, righe brevi su cosa cambia, con il link alla PR.
+
+- Le app Docker (e il hub) non hanno un numero di versione: le sezioni
+  sono i giorni, `## AAAA-MM-GG`. Il tag `sha-<commit>` dell'immagine
+  resta il riferimento per tornare indietro.
+- L'app iOS ha la versione `0.1.N`, con N il numero di commit di main
+  (IOSB-003). La PR aggiunge la sezione `## 0.1.N · AAAA-MM-GG` con N =
+  commit di main + 1, perché il merge squash ne aggiunge uno. Il builder
+  copia quella sezione nelle note della versione su SideStore (IOSB-005);
+  se il numero non torna, mostra i titoli dei commit.
 
 ## 4. Pubblicazione
 
