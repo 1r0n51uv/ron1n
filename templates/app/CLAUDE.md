@@ -19,3 +19,6 @@ https://github.com/1r0n51uv/ron1n/blob/main/docs/flusso-sviluppo.md.
   saltare test per farla passare.
 - Il merge su `main` pubblica l'immagine su GHCR e il server si aggiorna da
   solo: `main` deve essere sempre deployabile.
+- Per rivedere un'interfaccia usa la skill `apple-design` in
+  `.claude/skills/` (vedi "Revisione del design" nel flusso). Non si
+  formatta né si linta: è esclusa da Prettier e ESLint.

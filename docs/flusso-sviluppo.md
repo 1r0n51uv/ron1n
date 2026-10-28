@@ -91,6 +91,29 @@ Gli script npm comuni sono in
 chiama per nome, quindi un'app con uno stack diverso deve offrire gli stessi
 comandi.
 
+### Revisione del design
+
+Le app con interfaccia (ron1nOS e l'app iOS) hanno nel repo la skill
+[`apple-design`](https://github.com/dickwu/apple-design-skill), installata
+con:
+
+```sh
+npx skills add dickwu/apple-design-skill -a claude-code --copy -y
+```
+
+Sta in `.claude/skills/apple-design/`, con la versione fissata in
+`skills-lock.json`. Contiene le Human Interface Guidelines di Apple in
+Markdown e il metodo di revisione: Claude la usa quando gli si chiede di
+rivedere un'interfaccia, una schermata o una PR con UI, e cita la pagina e
+il paragrafo di ogni regola. Le regole di stile ron1nOS restano quelli del design
+system: dove la skill e il design system non concordano (per esempio il
+tema solo scuro) vince il design system, e la revisione lo segnala come
+scelta voluta.
+
+I file della skill non si formattano né si lintano: sono esclusi da
+Prettier, markdownlint e dai linter dell'app. Si aggiorna con
+`npx skills update -p`, in una PR a sé con label `type:chore`.
+
 ### CI del hub
 
 Anche questo repo ha il suo `ci.yml` (`npm run check` in locale): formato
