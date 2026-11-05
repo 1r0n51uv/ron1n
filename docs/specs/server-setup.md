@@ -196,7 +196,8 @@ Accettazione:
       perché il certificato gratuito di Cloudflare copre `*.ron1n.space` e
       non `*.home.ron1n.space`.
 - [x] I nomi: `home.ron1n.space` per la dashboard, poi `status.`,
-      `torrent.`, `glances.` e `ios.ron1n.space`. Il dominio sta in
+      `torrent.`, `glances.`, `ios.` e `hermes.ron1n.space` (dashboard di
+      Hermes del dojo). Il dominio sta in
       `DOMINIO` (default `ron1n.space`) in `infra/proxy/.env`, non scritto
       a mano nei file.
 - [x] Caddy serve solo HTTP sulla rete `proxy`, niente certificati né

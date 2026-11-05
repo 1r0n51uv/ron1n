@@ -4,6 +4,10 @@ Cosa cambia nel hub ron1n (documentazione, `infra/`, script del server), il
 giorno più recente in alto. Ogni PR aggiunge la sua riga in cima, sotto il
 giorno del merge ([flusso](docs/flusso-sviluppo.md#changelog)).
 
+## 2026-11-05
+
+- `hermes.ron1n.space`: la dashboard di Hermes del dojo, da Caddy verso `dojo-dashboard:9119` sulla rete `proxy`, dietro Cloudflare Access (SETUP-008) ([#68](https://github.com/1r0n51uv/ron1n/pull/68))
+
 ## 2026-10-28
 
 - Novità di ogni versione nelle note di SideStore e CHANGELOG nei repo (IOSB-005) ([#67](https://github.com/1r0n51uv/ron1n/pull/67))
