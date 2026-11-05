@@ -42,6 +42,13 @@ http://*.{$DOMINIO} {
 		reverse_proxy ios-builds:80
 	}
 
+	# Dashboard di Hermes del dojo (repo ron1n-dojo, room lab), anche per
+	# un'app iOS che si collega alla dashboard. Ha il suo login.
+	@hermes host hermes.{$DOMINIO}
+	handle @hermes {
+		reverse_proxy dojo-dashboard:9119
+	}
+
 	# Un nome che non è di nessun servizio.
 	handle {
 		respond "Sito sconosciuto" 404
