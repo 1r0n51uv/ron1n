@@ -4,6 +4,10 @@ Cosa cambia nel hub ron1n (documentazione, `infra/`, script del server), il
 giorno più recente in alto. Ogni PR aggiunge la sua riga in cima, sotto il
 giorno del merge ([flusso](docs/flusso-sviluppo.md#changelog)).
 
+## 2026-11-11
+
+- L'icona dell'app nell'elenco di SideStore è il sigillo con la katana, al posto del cerchio rosso (IOSB-003) ([#69](https://github.com/1r0n51uv/ron1n/pull/69))
+
 ## 2026-11-05
 
 - `hermes.ron1n.space`: la dashboard di Hermes del dojo, da Caddy verso `dojo-dashboard:9119` sulla rete `proxy`, dietro Cloudflare Access (SETUP-008) ([#68](https://github.com/1r0n51uv/ron1n/pull/68))

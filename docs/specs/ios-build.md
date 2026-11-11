@@ -84,7 +84,8 @@ Accettazione:
 - [ ] Una build di `main` copia l'IPA in `IOS_DIR/builds/sidestore` e
       riscrive lì `source.json`, nel formato delle source di AltStore e
       SideStore: nome, bundle id (da `xtool.yml`), icona (`iconURL`,
-      obbligatoria per SideStore, `icon.png` dall'immagine del builder),
+      obbligatoria per SideStore, `icon.png` dall'immagine del builder: il
+      sigillo con la katana, lo stesso dell'app e della dashboard),
       versione, build, data, dimensione e link assoluto all'IPA, che ha il
       commit nel nome. Ci
       sono anche i campi vecchi (`version`, `downloadURL`, `size`) per
