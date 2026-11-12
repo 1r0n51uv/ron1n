@@ -4,6 +4,10 @@ Cosa cambia nel hub ron1n (documentazione, `infra/`, script del server), il
 giorno più recente in alto. Ogni PR aggiunge la sua riga in cima, sotto il
 giorno del merge ([flusso](docs/flusso-sviluppo.md#changelog)).
 
+## 2026-11-12
+
+- ron1nOS monta in sola lettura la cartella delle foto del dojo e riceve `HERMES_URL`, `HERMES_API_KEY` e `RECIPE_PHOTOS_DIR` per le foto delle ricette generate da image-chef (ROOM-016) ([#70](https://github.com/1r0n51uv/ron1n/pull/70))
+
 ## 2026-11-11
 
 - L'icona dell'app nell'elenco di SideStore è il sigillo con la katana, al posto del cerchio rosso (IOSB-003) ([#69](https://github.com/1r0n51uv/ron1n/pull/69))

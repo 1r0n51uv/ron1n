@@ -20,6 +20,10 @@ services:
     # Si può riscaricare in ogni momento, quindi niente backup.
     volumes:
       - workout-catalog:/data/workout-catalog
+      # Foto delle ricette generate da image-chef nel dojo (NUT-036): la
+      # cartella `foto-ricette` della cartella di lavoro del dojo, in sola
+      # lettura. Senza DOJO_FOTO_DIR è una cartella vuota qui accanto.
+      - ${DOJO_FOTO_DIR:-./foto-ricette}:/data/foto-ricette:ro
     networks:
       - proxy
       - db
