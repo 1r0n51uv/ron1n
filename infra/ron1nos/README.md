@@ -27,6 +27,15 @@ Il volume `workout-catalog` tiene la copia delle foto degli esercizi
 al primo avvio e poi la serve dal disco. Se si cancella, si riscarica da
 sola.
 
+## Foto delle ricette
+
+Il pulsante «Genera foto» dell'app chiede la foto all'agente `image-chef` del
+dojo ([ron1n-dojo](https://github.com/1r0n51uv/ron1n-dojo), ROOM-016).
+Nel `.env` servono `HERMES_URL`, `HERMES_API_KEY` e `DOJO_FOTO_DIR`
+(vedi `.env.example`); il dojo deve aver fatto `scripts/dojo.sh up` con
+`image-chef` in `DOJO_AGENTS` e il login ChatGPT. Le foto restano nella
+cartella del dojo, che ron1nOS legge in sola lettura: salvale nei backup del dojo.
+
 ## Aggiornamenti
 
 L'immagine `:main` viene pubblicata su GHCR a ogni merge su main e
